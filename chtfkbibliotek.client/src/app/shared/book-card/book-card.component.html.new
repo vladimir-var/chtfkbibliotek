@@ -1,0 +1,33 @@
+<div class="book-card" (click)="viewBookDetails()">
+  <div class="card">
+    <div class="card-img-container" [ngClass]="{'compact-image': compact}">
+      <img [src]="book.coverImage" class="card-img-top" [alt]="book.title">
+      <div class="genre-tag" *ngIf="book.genres && book.genres.length > 0">
+        {{ book.genres[0].name }}
+      </div>
+    </div>
+    <div class="card-body d-flex flex-column">
+      <h5 class="card-title" [ngClass]="{'mb-1': compact}">{{ book.title }}</h5>
+      <h6 class="card-subtitle mb-2">{{ book.author }}</h6>
+      
+      <div *ngIf="!compact" class="book-meta">
+        <div class="book-year">
+          <i class="fas fa-calendar-alt me-1"></i> {{ book.yearPublished }}
+        </div>
+        <div class="book-genres">
+          <i class="fas fa-bookmark me-1"></i>
+          <span *ngFor="let genre of book.genres.slice(0, 2); let last = last">
+            {{ genre.name }}{{!last ? ', ' : ''}}
+          </span>
+          <span *ngIf="book.genres.length > 2">...</span>
+        </div>
+      </div>
+      
+      <div class="mt-auto">
+        <div class="card-footer" *ngIf="!compact">
+          <button class="btn btn-primary">Детальніше</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

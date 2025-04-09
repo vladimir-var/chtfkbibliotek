@@ -1,0 +1,184 @@
+<div class="book-search-container">
+  <!-- Search header section -->
+  <div class="search-header">
+    <div class="container">
+      <h1 class="search-title">Каталог бібліотеки</h1>
+      <p class="search-description">Знайдіть потрібну книгу за назвою, автором або жанром</p>
+      
+      <!-- Search input -->
+      <div class="search-input-group">
+        <input 
+          type="text" 
+          class="form-control search-input" 
+          placeholder="Введіть назву книги, автора або ключове слово..."
+          [(ngModel)]="searchTerm"
+          name="searchTerm"
+          (keyup.enter)="search()">
+        <button type="button" class="search-btn" (click)="search()">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Book list section -->
+  <div class="book-list-section">
+    <div class="container">
+      <div class="row">
+        <!-- Sidebar filters -->
+        <div class="col-lg-3">
+          <!-- Mobile filter trigger -->
+          <button 
+            class="filter-trigger-btn d-lg-none" 
+            type="button" 
+            (click)="toggleMobileFilters()"
+            [attr.aria-expanded]="isMobileFiltersShown">
+            <span><i class="fas fa-filter"></i> Фільтри</span>
+            <i class="fas fa-chevron-down toggle-icon" [class.rotate]="isMobileFiltersShown"></i>
+          </button>
+          
+          <!-- Filters wrapper -->
+          <div class="filters-wrapper" [class.filter-collapse]="!isMobileFiltersShown" [class.show]="isMobileFiltersShown">
+            <h2 class="filters-title">Фільтри</h2>
+            
+            <!-- Active filters -->
+            <div class="active-filters" *ngIf="hasActiveFilters()">
+              <div class="active-filters-title">Активні фільтри:</div>
+              <div class="active-filters-badges">
+                <span class="filter-badge" *ngFor="let genre of getSelectedGenreNames()">
+                  {{ genre }}
+                  <i class="fas fa-times remove-filter" (click)="removeGenreFilter(genre)"></i>
+                </span>
+                <span class="filter-badge" *ngIf="yearFrom">
+                  Від {{ yearFrom }} року
+                  <i class="fas fa-times remove-filter" (click)="yearFrom = null; applyFilters()"></i>
+                </span>
+                <span class="filter-badge" *ngIf="yearTo">
+                  До {{ yearTo }} року
+                  <i class="fas fa-times remove-filter" (click)="yearTo = null; applyFilters()"></i>
+                </span>
+              </div>
+            </div>
+            
+            <!-- Genre filter -->
+            <div class="filter-section">
+              <h3 class="filter-section-title">
+                <i class="fas fa-book"></i> Жанри
+              </h3>
+              <div class="genre-filter-list">
+                <div class="form-check" *ngFor="let genre of genres">
+                  <input 
+                    class="form-check-input" 
+                    type="checkbox" 
+                    [id]="'genre-' + genre.id"
+                    [checked]="selectedGenres.includes(genre.id)"
+                    (change)="toggleGenre(genre.id)">
+                  <label class="form-check-label" [for]="'genre-' + genre.id">
+                    {{ genre.name }}
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Year filter -->
+            <div class="filter-section">
+              <h3 class="filter-section-title">
+                <i class="fas fa-calendar-alt"></i> Рік видання
+              </h3>
+              <div class="year-range-container">
+                <div class="row g-2">
+                  <div class="col-6">
+                    <label for="yearFrom" class="form-label">Від</label>
+                    <input 
+                      type="number" 
+                      class="form-control" 
+                      id="yearFrom"
+                      [(ngModel)]="yearFrom"
+                      (change)="applyFilters()">
+                  </div>
+                  <div class="col-6">
+                    <label for="yearTo" class="form-label">До</label>
+                    <input 
+                      type="number" 
+                      class="form-control" 
+                      id="yearTo"
+                      [(ngModel)]="yearTo"
+                      (change)="applyFilters()">
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Filter actions -->
+            <div class="filter-actions">
+              <button class="btn-apply-filters" (click)="applyFilters()">
+                <i class="fas fa-check"></i> Застосувати фільтри
+              </button>
+              <button class="btn-reset-filters" (click)="resetFilters()">
+                <i class="fas fa-undo"></i> Скинути фільтри
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Book results -->
+        <div class="col-lg-9">
+          <!-- Results counter -->
+          <div class="found-counter">
+            Знайдено <span>{{ books.length }}</span> книг
+          </div>
+          
+          <!-- Books grid -->
+          <div class="row books-grid" *ngIf="books.length > 0">
+            <div class="col-md-6 col-lg-4" *ngFor="let book of books">
+              <app-book-card [book]="book"></app-book-card>
+            </div>
+          </div>
+          
+          <!-- Empty state -->
+          <div class="empty-state" *ngIf="books.length === 0 && !isLoading">
+            <div class="empty-state-icon">
+              <i class="fas fa-search"></i>
+            </div>
+            <h3 class="empty-state-title">Книг не знайдено</h3>
+            <p class="empty-state-text">
+              На жаль, за вашим запитом не знайдено жодної книги. Спробуйте змінити параметри пошуку або фільтри.
+            </p>
+            <button class="btn btn-secondary" (click)="resetFilters()">
+              <i class="fas fa-undo"></i> Скинути фільтри
+            </button>
+          </div>
+          
+          <!-- Loading state -->
+          <div class="loading-state" *ngIf="isLoading">
+            <div class="spinner-border" role="status">
+              <span class="visually-hidden">Завантаження...</span>
+            </div>
+            <div class="mt-3">Завантаження книг...</div>
+          </div>
+          
+          <!-- Pagination -->
+          <div class="pagination-container" *ngIf="books.length > 0">
+            <nav aria-label="Навігація по сторінках">
+              <ul class="pagination">
+                <li class="page-item disabled">
+                  <a class="page-link" href="#" tabindex="-1" aria-disabled="true">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                <li class="page-item"><a class="page-link" href="#">2</a></li>
+                <li class="page-item"><a class="page-link" href="#">3</a></li>
+                <li class="page-item">
+                  <a class="page-link" href="#">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,48 @@
+:root {
+  /* Primary Colors from the specification */
+  --primary: #6c5f5b;
+  --primary-dark: #4f4a45;
+  --primary-light: #dac3b3;
+  --secondary: #cdab81;
+  --secondary-dark: #b99969;
+  --secondary-light: #e5d4bf;
+
+  /* RGB values for transparency use */
+  --primary-rgb: 108, 95, 91;
+  --primary-dark-rgb: 79, 74, 69;
+  --primary-light-rgb: 218, 195, 179;
+  --secondary-rgb: 205, 171, 129;
+  --secondary-dark-rgb: 185, 153, 105;
+  --secondary-light-rgb: 229, 212, 191;
+
+  /* Text colors */
+  --primary-text: #333333;
+  --secondary-text: #666666;
+  --light-text: #ffffff;
+
+  /* Background colors */
+  --bg-light: #f8f9fa;
+  --bg-dark: #343a40;
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 3rem;
+
+  /* Border radius */
+  --border-radius-sm: 0.25rem;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 1rem;
+
+  /* Transitions */
+  --transition-fast: 0.2s ease;
+  --transition-normal: 0.3s ease;
+  --transition-slow: 0.5s ease;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.12);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+}

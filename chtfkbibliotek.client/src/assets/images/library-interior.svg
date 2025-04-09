@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="400" viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background - Library Room -->
+  <rect width="600" height="400" fill="#4f4a45"/>
+  
+  <!-- Floor -->
+  <rect x="0" y="300" width="600" height="100" fill="#6c5f5b"/>
+  
+  <!-- Back Wall Bookshelves -->
+  <rect x="50" y="50" width="500" height="250" fill="#3c3835"/>
+  
+  <!-- Bookshelf Sections -->
+  <rect x="70" y="70" width="140" height="230" fill="#4f4a45"/>
+  <rect x="230" y="70" width="140" height="230" fill="#4f4a45"/>
+  <rect x="390" y="70" width="140" height="230" fill="#4f4a45"/>
+  
+  <!-- Books on Shelves -->
+  <!-- Section 1 -->
+  <rect x="80" y="80" width="20" height="60" fill="#cdab81"/>
+  <rect x="105" y="80" width="25" height="60" fill="#dac3b3"/>
+  <rect x="135" y="80" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="155" y="80" width="25" height="60" fill="#cdab81"/>
+  <rect x="185" y="80" width="15" height="60" fill="#dac3b3"/>
+  
+  <rect x="80" y="150" width="25" height="60" fill="#dac3b3"/>
+  <rect x="110" y="150" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="130" y="150" width="20" height="60" fill="#cdab81"/>
+  <rect x="155" y="150" width="25" height="60" fill="#dac3b3"/>
+  <rect x="185" y="150" width="15" height="60" fill="#6c5f5b"/>
+  
+  <rect x="80" y="220" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="100" y="220" width="20" height="60" fill="#cdab81"/>
+  <rect x="125" y="220" width="25" height="60" fill="#dac3b3"/>
+  <rect x="155" y="220" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="175" y="220" width="25" height="60" fill="#cdab81"/>
+  
+  <!-- Section 2 -->
+  <rect x="240" y="80" width="25" height="60" fill="#dac3b3"/>
+  <rect x="270" y="80" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="290" y="80" width="20" height="60" fill="#cdab81"/>
+  <rect x="315" y="80" width="25" height="60" fill="#dac3b3"/>
+  <rect x="345" y="80" width="15" height="60" fill="#6c5f5b"/>
+  
+  <rect x="240" y="150" width="20" height="60" fill="#cdab81"/>
+  <rect x="265" y="150" width="25" height="60" fill="#dac3b3"/>
+  <rect x="295" y="150" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="315" y="150" width="20" height="60" fill="#cdab81"/>
+  <rect x="340" y="150" width="25" height="60" fill="#dac3b3"/>
+  
+  <rect x="240" y="220" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="260" y="220" width="30" height="60" fill="#cdab81"/>
+  <rect x="295" y="220" width="25" height="60" fill="#dac3b3"/>
+  <rect x="325" y="220" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="345" y="220" width="20" height="60" fill="#cdab81"/>
+  
+  <!-- Section 3 -->
+  <rect x="400" y="80" width="20" height="60" fill="#cdab81"/>
+  <rect x="425" y="80" width="25" height="60" fill="#dac3b3"/>
+  <rect x="455" y="80" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="475" y="80" width="20" height="60" fill="#cdab81"/>
+  <rect x="500" y="80" width="25" height="60" fill="#dac3b3"/>
+  
+  <rect x="400" y="150" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="420" y="150" width="20" height="60" fill="#cdab81"/>
+  <rect x="445" y="150" width="25" height="60" fill="#dac3b3"/>
+  <rect x="475" y="150" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="495" y="150" width="30" height="60" fill="#cdab81"/>
+  
+  <rect x="400" y="220" width="25" height="60" fill="#dac3b3"/>
+  <rect x="430" y="220" width="15" height="60" fill="#6c5f5b"/>
+  <rect x="450" y="220" width="20" height="60" fill="#cdab81"/>
+  <rect x="475" y="220" width="25" height="60" fill="#dac3b3"/>
+  <rect x="505" y="220" width="15" height="60" fill="#6c5f5b"/>
+  
+  <!-- Reading Table -->
+  <rect x="200" y="330" width="200" height="10" fill="#cdab81"/>
+  <rect x="210" y="340" width="180" height="40" fill="#cdab81"/>
+  <rect x="210" y="380" width="20" height="20" fill="#cdab81"/>
+  <rect x="370" y="380" width="20" height="20" fill="#cdab81"/>
+  
+  <!-- Book on Table -->
+  <rect x="250" y="320" width="40" height="10" fill="#dac3b3"/>
+  <rect x="320" y="320" width="30" height="10" fill="#6c5f5b"/>
+  
+  <!-- Reading Lamp -->
+  <rect x="290" y="280" width="5" height="50" fill="#cdab81"/>
+  <circle cx="292.5" cy="275" r="15" fill="#cdab81" opacity="0.7"/>
+  <circle cx="292.5" cy="275" r="10" fill="#dac3b3" opacity="0.9"/>
+  
+  <!-- Lighting Effect -->
+  <circle cx="292.5" cy="275" r="100" fill="white" opacity="0.1"/>
+  
+  <!-- Shelf Separators -->
+  <rect x="70" y="145" width="140" height="5" fill="#3c3835"/>
+  <rect x="70" y="215" width="140" height="5" fill="#3c3835"/>
+  
+  <rect x="230" y="145" width="140" height="5" fill="#3c3835"/>
+  <rect x="230" y="215" width="140" height="5" fill="#3c3835"/>
+  
+  <rect x="390" y="145" width="140" height="5" fill="#3c3835"/>
+  <rect x="390" y="215" width="140" height="5" fill="#3c3835"/>
+</svg>

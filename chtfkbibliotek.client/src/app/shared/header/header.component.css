@@ -1,0 +1,104 @@
+.main-header {
+  background-color: var(--primary-dark);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  border-bottom: 5px solid var(--secondary);
+}
+
+.navbar {
+  padding: 0.75rem 0;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  transition: transform 0.3s;
+}
+
+.navbar-brand:hover {
+  transform: scale(1.05);
+}
+
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--secondary);
+  margin-left: 0.5rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.nav-link {
+  color: var(--primary-light);
+  font-weight: 500;
+  padding: 0.75rem 1.25rem;
+  transition: all 0.3s;
+  border-radius: var(--border-radius-sm);
+  margin: 0 0.25rem;
+  position: relative;
+}
+
+.nav-link::after {
+  content: "";
+  position: absolute;
+  bottom: 0.35rem;
+  left: 1.25rem;
+  right: 1.25rem;
+  height: 2px;
+  background-color: var(--secondary);
+  transform: scaleX(0);
+  transition: transform 0.3s;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+  transform: scaleX(1);
+}
+
+.nav-link:hover,
+.nav-link.active {
+  color: var(--secondary);
+}
+
+.navbar-toggler {
+  border: none;
+  padding: 0.5rem;
+  color: var(--primary-light);
+}
+
+.navbar-toggler:focus {
+  box-shadow: none;
+}
+
+.navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28218, 195, 179, 1%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* Mobile menu adjustments */
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    background-color: var(--primary);
+    padding: 1rem;
+    border-radius: var(--border-radius-md);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    margin-top: 1rem;
+    border-left: 3px solid var(--secondary);
+  }
+  
+  .nav-link {
+    padding: 0.75rem 1rem;
+    border-radius: var(--border-radius-sm);
+    margin: 0.25rem 0;
+  }
+  
+  .nav-link::after {
+    display: none;
+  }
+  
+  .nav-link:hover,
+  .nav-link.active {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--secondary);
+  }
+}

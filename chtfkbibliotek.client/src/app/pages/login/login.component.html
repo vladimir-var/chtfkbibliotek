@@ -1,0 +1,78 @@
+<div class="login-container">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-md-6 col-lg-5">
+        <div class="login-card">
+          <div class="form-decoration"></div>
+          
+          <div class="card-header">
+            <h1 class="login-title">Вхід для адміністратора</h1>
+          </div>
+          
+          <div class="card-body">
+            <form (ngSubmit)="login()" #loginForm="ngForm">
+              <div class="alert alert-danger" *ngIf="errorMessage">
+                <i class="fas fa-exclamation-circle me-2"></i>
+                {{ errorMessage }}
+              </div>
+              
+              <div class="form-group">
+                <label for="username" class="form-label">Логін</label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-user"></i>
+                  </span>
+                  <input 
+                    type="text" 
+                    class="form-control" 
+                    id="username" 
+                    name="username"
+                    placeholder="Введіть ім'я користувача"
+                    [(ngModel)]="username"
+                    required>
+                </div>
+                <div class="form-text" *ngIf="loginForm.submitted && !username">
+                  Будь ласка, введіть ім'я користувача
+                </div>
+              </div>
+              
+              <div class="form-group">
+                <label for="password" class="form-label">Пароль</label>
+                <div class="input-group">
+                  <span class="input-group-text">
+                    <i class="fas fa-lock"></i>
+                  </span>
+                  <input 
+                    type="password" 
+                    class="form-control" 
+                    id="password" 
+                    name="password"
+                    placeholder="Введіть пароль"
+                    [(ngModel)]="password"
+                    required>
+                </div>
+                <div class="form-text" *ngIf="loginForm.submitted && !password">
+                  Будь ласка, введіть пароль
+                </div>
+              </div>
+              
+              <button 
+                type="submit" 
+                class="btn-login" 
+                [disabled]="!loginForm.form.valid">
+                <i class="fas fa-sign-in-alt me-2"></i>
+                Увійти до системи
+              </button>
+              
+              <div class="text-center mt-4">
+                <a [routerLink]="['/']" class="back-link">
+                  <i class="fas fa-arrow-left me-1"></i> Повернутися на головну
+                </a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

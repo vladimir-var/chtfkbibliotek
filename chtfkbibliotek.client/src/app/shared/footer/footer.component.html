@@ -1,0 +1,55 @@
+<footer class="main-footer">
+  <div class="container">
+    <div class="row gy-4">
+      <div class="col-md-4">
+        <h3 class="footer-title">ЧХТФК Бібліотека</h3>
+        <p class="footer-text">
+          Онлайн-каталог бібліотеки Черкаського художньо-технічного фахового коледжу.
+        </p>
+      </div>
+      
+      <div class="col-md-4">
+        <h3 class="footer-title">Навігація</h3>
+        <ul class="footer-links">
+          <li><a [routerLink]="['/']">Головна</a></li>
+          <li><a [routerLink]="['/books']">Каталог</a></li>
+          <li><a [routerLink]="['/login']">Вхід</a></li>
+        </ul>
+      </div>
+      
+      <div class="col-md-4">
+        <h3 class="footer-title">Контакти</h3>
+        <address class="footer-contact">
+          <p><i class="fas fa-map-marker-alt"></i> м. Черкаси, вул. Сумгаїтська, 13/1</p>
+          <p><i class="fas fa-phone"></i> (0472) 66-12-05</p>
+          <p><i class="fas fa-envelope"></i> library&#64;chtk.ck.ua</p>
+        </address>
+      </div>
+    </div>
+    
+    <hr class="footer-divider">
+    
+    <div class="footer-bottom">
+      <div class="row">
+        <div class="col-md-6">
+          <p class="copyright-text">
+            &copy; {{ currentYear }} ЧХТФК Бібліотека. Всі права захищено.
+          </p>
+        </div>
+        <div class="col-md-6">
+          <div class="social-links">
+            <a href="#" class="social-link" aria-label="Facebook">
+              <i class="fab fa-facebook-f"></i>
+            </a>
+            <a href="#" class="social-link" aria-label="Instagram">
+              <i class="fab fa-instagram"></i>
+            </a>
+            <a href="#" class="social-link" aria-label="YouTube">
+              <i class="fab fa-youtube"></i>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>

@@ -1,0 +1,223 @@
+/* Global styles */
+:root {
+  /* Primary color palette from user requirements */
+  --primary-dark: #6c5f5b;  /* темний коричнево-сірий */
+  --primary: #4f4a45;       /* темний сіро-коричневий (був secondary) */
+  --primary-light: #dac3b3;  /* світлий бежево-рожевий */
+  --secondary: #cdab81;      /* середній золотисто-коричневий (був primary) */
+  
+  /* Extended color palette based on the main colors */
+  --secondary-dark: #b59762; /* темніша версія secondary */
+  --secondary-light: #dec08d; /* світліша версія secondary */
+  
+  /* Text colors */
+  --text-dark: #2c2925;
+  --text-light: #6b6561;
+  --light-text: #f1ece7;
+  --text-muted: #a3a3a3;
+  
+  /* Background colors */
+  --background-light: #f8f5f2;
+  --background-dark: #e5e0dc;
+  
+  /* Border radius */
+  --border-radius-sm: 0.25rem;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 1rem;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.15);
+}
+
+body {
+  font-family: 'Roboto', sans-serif;
+  color: var(--text-dark);
+  line-height: 1.5;
+  background-color: var(--primary-dark);
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--secondary);
+}
+
+a {
+  color: var(--secondary);
+  text-decoration: none;
+  transition: color 0.2s, transform 0.2s;
+}
+
+a:hover {
+  color: var(--secondary-dark);
+  text-decoration: none;
+}
+
+/* Button styles */
+.btn {
+  font-weight: 500;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--border-radius-sm);
+  transition: all 0.3s;
+}
+
+.btn-primary {
+  background-color: var(--secondary);
+  border-color: var(--secondary);
+  color: white;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background-color: var(--secondary-dark) !important;
+  border-color: var(--secondary-dark) !important;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-outline-primary {
+  color: var(--secondary);
+  border-color: var(--secondary);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus,
+.btn-outline-primary:active {
+  background-color: var(--secondary) !important;
+  border-color: var(--secondary) !important;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-secondary {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus,
+.btn-secondary:active {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.btn-outline-secondary {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.btn-outline-secondary:hover,
+.btn-outline-secondary:focus,
+.btn-outline-secondary:active {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: white;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Form controls */
+.form-control {
+  border-radius: var(--border-radius-sm);
+  padding: 0.5rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background-color: rgba(255, 255, 255, 0.95);
+}
+
+.form-control:focus {
+  box-shadow: 0 0 0 0.2rem rgba(205, 171, 129, 0.25);
+  border-color: var(--secondary);
+  background-color: white;
+}
+
+/* Section styles */
+.section-title {
+  margin-bottom: 2rem;
+  font-weight: 700;
+  color: var(--secondary);
+  position: relative;
+  display: inline-block;
+  padding-bottom: 0.75rem;
+}
+
+.section-title::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background-color: var(--secondary);
+}
+
+/* Cards and elements */
+.card {
+  border-radius: var(--border-radius-md);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  border: none;
+  transition: transform 0.3s, box-shadow 0.3s;
+  background-color: var(--primary);
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.25);
+}
+
+/* Custom utilities */
+.text-primary {
+  color: var(--secondary) !important;
+}
+
+.text-secondary {
+  color: var(--primary) !important;
+}
+
+.text-primary-dark {
+  color: var(--primary-dark) !important;
+}
+
+.text-primary-light {
+  color: var(--primary-light) !important;
+}
+
+.bg-primary {
+  background-color: var(--secondary) !important;
+}
+
+.bg-secondary {
+  background-color: var(--primary) !important;
+}
+
+.bg-primary-dark {
+  background-color: var(--primary-dark) !important;
+}
+
+.bg-primary-light {
+  background-color: var(--primary-light) !important;
+}
+
+.bg-light {
+  background-color: var(--background-light) !important;
+}
+
+.bg-dark {
+  background-color: var(--background-dark) !important;
+}
+
+/* Import Font Awesome */
+@import '@fortawesome/fontawesome-free/css/all.css';
+
+/* Import Bootstrap */
+@import 'bootstrap/dist/css/bootstrap.min.css';

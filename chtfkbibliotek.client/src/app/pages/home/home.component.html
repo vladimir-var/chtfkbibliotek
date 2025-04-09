@@ -1,0 +1,108 @@
+<div class="home-container">
+  <!-- Hero section -->
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-lg-6 hero-content">
+          <div class="hero-text-container">
+            <h1 class="hero-title">ЧХТФК Бібліотека</h1>
+            <h2 class="hero-subtitle">Знання • Розвиток • Натхнення</h2>
+            <p class="hero-text">
+              Ласкаво просимо до онлайн-бібліотеки Черкаського художньо-технічного фахового коледжу. 
+              Знайдіть найкращі українські та світові твори для свого розвитку та натхнення.
+            </p>
+            <div class="hero-buttons">
+              <a [routerLink]="['/books']" class="btn custom-btn btn-lg">
+                Перейти до каталогу
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-6 d-none d-lg-block">
+          <div class="hero-image-container">
+            <img src="assets/images/library-hero.svg" alt="Бібліотека" class="hero-image">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- Features section -->
+  <section class="features-section">
+    <div class="container">
+      <h2 class="section-title text-center mb-5">Що ми пропонуємо</h2>
+      <div class="row g-4">
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-book"></i>
+            </div>
+            <h3 class="feature-title">Широкий вибір</h3>
+            <p class="feature-text">
+              Великий вибір книжок різних жанрів, від класики до сучасної літератури для навчання та дозвілля.
+            </p>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-search"></i>
+            </div>
+            <h3 class="feature-title">Зручний пошук</h3>
+            <p class="feature-text">
+              Шукайте книги за назвою, автором чи жанром, використовуючи фільтри для точнішого пошуку.
+            </p>
+          </div>
+        </div>
+        <div class="col-lg-4 col-md-6">
+          <div class="feature-card">
+            <div class="feature-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <h3 class="feature-title">Доступність</h3>
+            <p class="feature-text">
+              Доступ до бібліотеки для всіх студентів та викладачів коледжу без обмежень у будь-який час.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- About section -->
+  <section class="about-section">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-lg-6 order-lg-2 mb-4 mb-lg-0">
+          <div class="about-image-container">
+            <img src="assets/images/library-interior.svg" alt="Інтер'єр бібліотеки" class="about-image img-fluid rounded">
+          </div>
+        </div>
+        <div class="col-lg-6 order-lg-1">
+          <div class="about-content">
+            <h2 class="section-title mb-4">Про нашу бібліотеку</h2>
+            <p class="about-text">
+              Бібліотека Черкаського художньо-технічного фахового коледжу – це центр знань та інформації, 
+              де зібрані книги для навчання, розвитку та дозвілля студентів і викладачів закладу.
+            </p>
+            <p class="about-text">
+              Наша місія – розвивати інтелектуальний потенціал молоді, надаючи доступ до якісної 
+              літератури різних жанрів та напрямків.
+            </p>
+            <a [routerLink]="['/books']" class="btn custom-btn mt-3">Переглянути каталог</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  
+  <!-- CTA section -->
+  <section class="cta-section">
+    <div class="container text-center">
+      <h2 class="cta-title">Знайдіть свою наступну улюблену книгу</h2>
+      <p class="cta-text">Каталог постійно оновлюється новими виданнями</p>
+      <a [routerLink]="['/books']" class="btn custom-btn btn-lg mt-3">Перейти до каталогу</a>
+    </div>
+  </section>
+</div>

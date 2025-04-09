@@ -1,0 +1,42 @@
+<div class="book-reader-container">
+  <div class="container py-5" *ngIf="book">
+    <div class="mb-4">
+      <a [routerLink]="['/books', book.id]" class="back-link">
+        <i class="fas fa-arrow-left"></i> Повернутися до інформації про книгу
+      </a>
+    </div>
+    
+    <div class="reader-header">
+      <h1 class="book-title">{{ book.title }}</h1>
+      <h2 class="book-author">{{ book.author }}</h2>
+    </div>
+    
+    <hr class="my-4">
+    
+    <div class="reader-content" *ngIf="book.content">
+      <div class="content-text">
+        <ng-container *ngFor="let paragraph of book.content.split('\n')">
+          <p *ngIf="paragraph">{{ paragraph }}</p>
+          <br *ngIf="!paragraph">
+        </ng-container>
+      </div>
+    </div>
+    
+    <div class="no-content-message" *ngIf="!book.content">
+      <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Текст цієї книги поки що недоступний для читання.
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading state -->
+  <div class="container py-5" *ngIf="!book">
+    <div class="loading-state text-center">
+      <div class="spinner-border text-primary mb-3" role="status">
+        <span class="visually-hidden">Завантаження...</span>
+      </div>
+      <p class="mb-0">Завантаження книги...</p>
+    </div>
+  </div>
+</div>

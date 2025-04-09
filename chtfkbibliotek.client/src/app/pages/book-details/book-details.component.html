@@ -1,0 +1,83 @@
+<div class="book-details-container">
+  <div class="container py-5" *ngIf="book">
+    <div class="mb-4">
+      <a [routerLink]="['/books']" class="back-link">
+        <i class="fas fa-arrow-left"></i> Повернутися до каталогу
+      </a>
+    </div>
+    
+    <div class="row">
+      <div class="col-lg-4 mb-4">
+        <div class="book-cover-container">
+          <img [src]="book.coverImage" [alt]="book.title" class="img-fluid book-cover">
+        </div>
+      </div>
+      
+      <div class="col-lg-8">
+        <h1 class="book-title">{{ book.title }}</h1>
+        <h2 class="book-author">{{ book.author }}</h2>
+        
+        <div class="book-genres mb-4">
+          <span class="genre-badge" *ngFor="let genre of book.genres">
+            {{ genre.name }}
+          </span>
+        </div>
+        
+        <div class="book-meta-info">
+          <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
+            <div class="col">
+              <div class="info-item">
+                <div class="info-label">Рік видання</div>
+                <div class="info-value">{{ book.yearPublished }}</div>
+              </div>
+            </div>
+            
+            <div class="col">
+              <div class="info-item">
+                <div class="info-label">Видавництво</div>
+                <div class="info-value">{{ book.publisher }}</div>
+              </div>
+            </div>
+            
+            <div class="col">
+              <div class="info-item">
+                <div class="info-label">Мова</div>
+                <div class="info-value">{{ book.language }}</div>
+              </div>
+            </div>
+            
+            <div class="col">
+              <div class="info-item">
+                <div class="info-label">Кількість сторінок</div>
+                <div class="info-value">{{ book.pageCount }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <hr class="my-4">
+        
+        <h3 class="description-title">Опис книги</h3>
+        <div class="book-description">
+          <p>{{ book.description }}</p>
+        </div>
+        
+        <div class="mt-4">
+          <a [routerLink]="['/book', book.id, 'read']" class="btn read-btn">
+            <i class="fas fa-book-open me-2"></i> Читати
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Loading state -->
+  <div class="container py-5" *ngIf="!book">
+    <div class="loading-state text-center">
+      <div class="spinner-border text-primary mb-3" role="status">
+        <span class="visually-hidden">Завантаження...</span>
+      </div>
+      <p class="mb-0">Завантаження інформації про книгу...</p>
+    </div>
+  </div>
+</div>
