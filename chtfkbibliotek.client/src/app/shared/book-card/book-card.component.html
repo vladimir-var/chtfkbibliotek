@@ -6,14 +6,15 @@
   <div class="card-body">
     <h3 class="card-title">{{ book.title }}</h3>
     <p class="card-subtitle">{{ book.author }}</p>
-    
+
     <!-- Genres badges -->
     <div class="book-genres">
-      <span class="genre-badge" *ngFor="let genre of book.genres.slice(0, 3)">
-        {{ genre.name }}
+      <span class="genre-badge" *ngFor="let genre of book.genreNames.slice(0, 3)">
+        {{ genre }}
       </span>
     </div>
-    
+
+
     <!-- Book meta info -->
     <div class="book-meta">
       <div class="book-year">

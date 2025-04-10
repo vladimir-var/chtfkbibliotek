@@ -23,31 +23,26 @@ export class BookSearchComponent implements OnInit {
   searchTerm: string = '';
   isLoading: boolean = false;
   isMobileFiltersShown: boolean = true;
-  
-  constructor(private bookService: BookService) {}
-  
+
+  constructor(private bookService: BookService) { }
+
   ngOnInit(): void {
     this.loadData();
   }
-  
+
   loadData(): void {
     this.isLoading = true;
-    
-    // Завантаження жанрів
+
     this.bookService.getAllGenres().subscribe(genres => {
       this.genres = genres;
     });
-    
-    // Підписка на зміни в книгах
-    this.bookService.filteredBooks$.subscribe(books => {
+
+    this.bookService.getAllBooks().subscribe(books => {
       this.books = books;
       this.isLoading = false;
     });
-    
-    // Початкове скидання фільтрів і завантаження книг
-    this.bookService.resetFilters();
   }
-  
+
   toggleGenre(genreId: number): void {
     const index = this.selectedGenres.indexOf(genreId);
     if (index > -1) {
@@ -57,14 +52,14 @@ export class BookSearchComponent implements OnInit {
     }
     this.applyFilters();
   }
-  
+
   getSelectedGenreNames(): string[] {
     return this.selectedGenres.map(id => {
       const genre = this.genres.find(g => g.id === id);
       return genre ? genre.name : '';
     }).filter(name => name !== '');
   }
-  
+
   removeGenreFilter(genreName: string): void {
     const genre = this.genres.find(g => g.name === genreName);
     if (genre) {
@@ -75,35 +70,43 @@ export class BookSearchComponent implements OnInit {
       }
     }
   }
-  
+
   applyFilters(): void {
     this.isLoading = true;
-    this.bookService.updateFilters({
+    const filters = {
       genres: this.selectedGenres,
       yearFrom: this.yearFrom,
       yearTo: this.yearTo,
       search: this.searchTerm
+    };
+
+    this.bookService.getFilteredBooks(filters).subscribe(books => {
+      this.books = books;
+      this.isLoading = false;
     });
   }
-  
+
   resetFilters(): void {
     this.selectedGenres = [];
     this.yearFrom = null;
     this.yearTo = null;
     this.searchTerm = '';
     this.isLoading = true;
-    this.bookService.resetFilters();
+
+    this.bookService.getAllBooks().subscribe(books => {
+      this.books = books;
+      this.isLoading = false;
+    });
   }
-  
+
   search(): void {
-    this.isLoading = true;
     this.applyFilters();
   }
-  
+
   toggleMobileFilters(): void {
     this.isMobileFiltersShown = !this.isMobileFiltersShown;
   }
-  
+
   hasActiveFilters(): boolean {
     return this.selectedGenres.length > 0 || this.yearFrom !== null || this.yearTo !== null || this.searchTerm !== '';
   }

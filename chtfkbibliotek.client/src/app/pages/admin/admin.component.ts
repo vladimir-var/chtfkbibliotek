@@ -26,7 +26,7 @@ export class AdminComponent implements OnInit {
   newBook: Partial<Book> = {
     title: '',
     author: '',
-    genres: [],
+    genreNames: [],
     yearPublished: new Date().getFullYear(),
     publisher: '',
     pageCount: 0,
@@ -173,7 +173,7 @@ export class AdminComponent implements OnInit {
     this.newBook = {
       title: '',
       author: '',
-      genres: [],
+      genreNames: [],
       yearPublished: new Date().getFullYear(),
       publisher: '',
       pageCount: 0,
@@ -185,12 +185,11 @@ export class AdminComponent implements OnInit {
     this.selectedGenres = [];
   }
   
-  // Метод для вибору книги для завантаження тексту
+ 
   selectBookForTextUpload(bookId: number): void {
     this.selectedBookId = bookId;
     this.bookTextContent = '';
-    
-    // Знаходимо книгу і, якщо в неї вже є текст, показуємо його
+
     this.bookService.getBookById(bookId).subscribe(book => {
       if (book && book.content) {
         this.bookTextContent = book.content;
@@ -198,7 +197,7 @@ export class AdminComponent implements OnInit {
     });
   }
   
-  // Метод для завантаження тексту книги
+ 
   uploadBookText(): void {
     if (!this.selectedBookId || !this.bookTextContent.trim()) {
       this.message = 'Будь ласка, виберіть книгу та введіть текст.';
