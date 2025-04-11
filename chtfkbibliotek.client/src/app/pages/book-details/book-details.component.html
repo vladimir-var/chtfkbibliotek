@@ -18,9 +18,10 @@
         <h2 class="book-author">{{ book.author }}</h2>
         
         <div class="book-genres mb-4">
-          <span class="genre-badge" *ngFor="let genre of book.genres">
-            {{ genre.name }}
+          <span class="genre-badge" *ngFor="let genre of book.genreNames">
+            {{ genre }}
           </span>
+
         </div>
         
         <div class="book-meta-info">
