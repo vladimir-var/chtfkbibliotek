@@ -1,12 +1,27 @@
 ﻿using chtfkbibliotek.Server.Models;
+using chtfkbibliotek.Server.Services;
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Добавление CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        // Разрешаем все источники, методы и заголовки
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
+
+// Добавление сервисов для работы с базой данных и контроллеров
+builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<GenreService>();
+
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
-    // Тепер не використовуємо NpgsqlDataSourceBuilder для MapEnum
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
 
@@ -16,10 +31,13 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+// Применение CORS
+app.UseCors("AllowAll");
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Configure the HTTP request pipeline.
+// Конфигурация пайплайна обработки HTTP-запросов
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

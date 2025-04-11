@@ -13,7 +13,7 @@ export interface BookFilters {
 
 @Injectable({ providedIn: 'root' })
 export class BookService {
-  private apiUrl = 'https://localhost:5001/api'; 
+  private apiUrl = 'https://localhost:57078/api'; 
 
   
   private filtersSubject = new BehaviorSubject<BookFilters>({
@@ -32,7 +32,7 @@ export class BookService {
   constructor(private http: HttpClient) { }
 
   getAllBooks(): Observable<Book[]> {
-    return this.http.get<Book[]>(`${this.apiUrl}/books`);
+    return this.http.get<Book[]>(`${this.apiUrl}/Books`);
   }
 
 
@@ -42,8 +42,9 @@ export class BookService {
 
 
   getAllGenres(): Observable<Genre[]> {
-    return this.http.get<Genre[]>(`${this.apiUrl}/genres`);
+    return this.http.get<Genre[]>(`${this.apiUrl}/genre`);  // Путь с маленькой буквы
   }
+
 
 
   addBook(book: Omit<Book, 'id'>): Observable<Book> {
@@ -59,12 +60,12 @@ export class BookService {
   getFilteredBooks(filters: BookFilters): Observable<Book[]> {
     const params: any = {};
 
-    if (filters.genres?.length) params.genres = filters.genres.join(',');
+    if (filters.genres?.length) params.genreId = filters.genres.join(',');
     if (filters.yearFrom) params.yearFrom = filters.yearFrom;
     if (filters.yearTo) params.yearTo = filters.yearTo;
     if (filters.search) params.search = filters.search;
 
-    return this.http.get<Book[]>(`${this.apiUrl}/books/filter`, { params });
+    return this.http.get<Book[]>(`${this.apiUrl}/books/`, { params });
   }
 
   updateFilters(filters: BookFilters): void {

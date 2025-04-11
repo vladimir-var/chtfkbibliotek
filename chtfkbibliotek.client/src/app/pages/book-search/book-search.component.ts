@@ -6,6 +6,7 @@ import { BookService } from '../../core/services/book.service';
 import { Book } from '../../core/models/book.model';
 import { Genre } from '../../core/models/genre.model';
 import { BookCardComponent } from '../../shared/book-card/book-card.component';
+import { forkJoin } from 'rxjs'; // Для параллельных запросов
 
 @Component({
   selector: 'app-book-search',
@@ -33,14 +34,23 @@ export class BookSearchComponent implements OnInit {
   loadData(): void {
     this.isLoading = true;
 
-    this.bookService.getAllGenres().subscribe(genres => {
-      this.genres = genres;
-    });
+    forkJoin({
+      genres: this.bookService.getAllGenres(),
+      books: this.bookService.getAllBooks()
+    }).subscribe(
+      ({ genres, books }) => {
+        console.log('Genres:', genres);  // Логируем жанры
+        console.log('Books:', books);    // Логируем книги
+        this.genres = genres;
+        this.books = books;
+        this.isLoading = false;
+      },
+      (error) => {
+        console.error('Error loading data:', error);
+        this.isLoading = false;
+      }
+    );
 
-    this.bookService.getAllBooks().subscribe(books => {
-      this.books = books;
-      this.isLoading = false;
-    });
   }
 
   toggleGenre(genreId: number): void {
@@ -80,10 +90,16 @@ export class BookSearchComponent implements OnInit {
       search: this.searchTerm
     };
 
-    this.bookService.getFilteredBooks(filters).subscribe(books => {
-      this.books = books;
-      this.isLoading = false;
-    });
+    this.bookService.getFilteredBooks(filters).subscribe(
+      (books) => {
+        this.books = books;
+        this.isLoading = false;
+      },
+      (error) => {
+        console.error('Error applying filters:', error);
+        this.isLoading = false;
+      }
+    );
   }
 
   resetFilters(): void {
@@ -93,10 +109,16 @@ export class BookSearchComponent implements OnInit {
     this.searchTerm = '';
     this.isLoading = true;
 
-    this.bookService.getAllBooks().subscribe(books => {
-      this.books = books;
-      this.isLoading = false;
-    });
+    this.bookService.getAllBooks().subscribe(
+      (books) => {
+        this.books = books;
+        this.isLoading = false;
+      },
+      (error) => {
+        console.error('Error resetting filters:', error);
+        this.isLoading = false;
+      }
+    );
   }
 
   search(): void {

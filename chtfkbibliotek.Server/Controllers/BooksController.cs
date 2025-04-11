@@ -1,197 +1,76 @@
 ﻿using chtfkbibliotek.Server.DTO;
-using chtfkbibliotek.Server.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
-namespace chtfkbibliotek.Server.Controllers;
-
-[ApiController]
-[Route("api/[controller]")]
-public class BooksController : ControllerBase
+namespace chtfkbibliotek.Server.Controllers
 {
-    private readonly AppDbContext _context;
-
-    public BooksController(AppDbContext context)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class BooksController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly IBookService _bookService;
 
-    [HttpGet]
-    public async Task<ActionResult<IEnumerable<BookDto>>> GetBooks(
-        [FromQuery] string? search,
-        [FromQuery] int? genreId,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 10)
-    {
-        var query = _context.Books
-            .Include(b => b.BookGenres)
-            .ThenInclude(bg => bg.Genre)
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(search))
+        public BooksController(IBookService bookService)
         {
-            query = query.Where(b =>
-                b.Title.ToLower().Contains(search.ToLower()) ||
-                b.Author.ToLower().Contains(search.ToLower()));
+            _bookService = bookService;
         }
 
-        if (genreId.HasValue)
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<BookDto>>> GetBooks(
+            [FromQuery] string? search,
+            [FromQuery] int? genreId,
+            [FromQuery] int? yearPublished,
+            [FromQuery] int? minPageCount,
+            [FromQuery] int? maxPageCount,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 10)
         {
-            query = query.Where(b => b.BookGenres.Any(bg => bg.GenreId == genreId.Value));
+            var books = await _bookService.GetBooksAsync(search, genreId, yearPublished, minPageCount, maxPageCount, page, pageSize);
+            return Ok(books);
         }
 
-        var books = await query
-            .OrderByDescending(b => b.Id)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(b => new BookDto
-            {
-                Id = b.Id,
-                Title = b.Title,
-                Author = b.Author,
-                YearPublished = b.YearPublished,
-                Publisher = b.Publisher,
-                PageCount = b.PageCount,
-                Language = b.Language,  // Тепер просто рядок
-                CoverImage = b.CoverImage,
-                Description = b.Description,
-                GenreNames = b.BookGenres.Select(bg => bg.Genre.Name).ToList()
-            })
-            .ToListAsync();
-
-        return Ok(books);
-    }
-
-    [HttpGet("check-db")]
-    public async Task<IActionResult> CheckDb()
-    {
-        try
+        [HttpGet("check-db")]
+        public async Task<IActionResult> CheckDb()
         {
-            await _context.Database.ExecuteSqlRawAsync("SELECT 1");
-            return Ok("✅ Підключення до бази даних встановлено.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, "❌ Немає підключення до бази даних.\n" + ex.Message);
-        }
-    }
-
-    [HttpGet("{id}")]
-    public async Task<ActionResult<BookDto>> GetBook(int id)
-    {
-        var book = await _context.Books
-            .Include(b => b.BookGenres)
-            .ThenInclude(bg => bg.Genre)
-            .FirstOrDefaultAsync(b => b.Id == id);
-
-        if (book == null) return NotFound();
-
-        return new BookDto
-        {
-            Id = book.Id,
-            Title = book.Title,
-            Author = book.Author,
-            YearPublished = book.YearPublished,
-            Publisher = book.Publisher,
-            PageCount = book.PageCount,
-            Language = book.Language,  // Тепер просто рядок
-            CoverImage = book.CoverImage,
-            Description = book.Description,
-            GenreNames = book.BookGenres.Select(bg => bg.Genre.Name).ToList()
-        };
-    }
-
-    [HttpGet("{id}/content")]
-    public async Task<IActionResult> GetBookContent(int id)
-    {
-        var book = await _context.Books.FindAsync(id);
-        if (book == null || book.Content == null)
-            return NotFound();
-
-        return File(book.Content, "application/octet-stream", $"{book.Title}.txt");
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> CreateBook([FromForm] BookCreateDto dto)
-    {
-        var book = new Book
-        {
-            Title = dto.Title,
-            Author = dto.Author,
-            YearPublished = dto.YearPublished,
-            Publisher = dto.Publisher,
-            PageCount = dto.PageCount,
-            Language = dto.Language,  // Тепер приймаємо просто рядок
-            CoverImage = dto.CoverImage,
-            Description = dto.Description
-        };
-
-        if (dto.File != null)
-        {
-            using var ms = new MemoryStream();
-            await dto.File.CopyToAsync(ms);
-            book.Content = ms.ToArray();
+            var result = await _bookService.CheckDbAsync();
+            return Ok(result);
         }
 
-        foreach (var genreId in dto.GenreIds)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<BookDto>> GetBook(int id)
         {
-            book.BookGenres.Add(new BookGenre
-            {
-                GenreId = genreId
-            });
+            var book = await _bookService.GetBookAsync(id);
+            if (book == null) return NotFound();
+            return Ok(book);
         }
 
-        _context.Books.Add(book);
-        await _context.SaveChangesAsync();
-
-        return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
-    }
-
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateBook(int id, [FromForm] BookCreateDto dto)
-    {
-        var book = await _context.Books
-            .Include(b => b.BookGenres)
-            .FirstOrDefaultAsync(b => b.Id == id);
-
-        if (book == null) return NotFound();
-
-        book.Title = dto.Title;
-        book.Author = dto.Author;
-        book.YearPublished = dto.YearPublished;
-        book.Publisher = dto.Publisher;
-        book.PageCount = dto.PageCount;
-        book.Language = dto.Language;  // Тепер приймаємо просто рядок
-        book.CoverImage = dto.CoverImage;
-        book.Description = dto.Description;
-
-        if (dto.File != null)
+        [HttpPost]
+        public async Task<IActionResult> CreateBook([FromForm] BookCreateDto dto)
         {
-            using var ms = new MemoryStream();
-            await dto.File.CopyToAsync(ms);
-            book.Content = ms.ToArray();
+            var book = await _bookService.CreateBookAsync(dto);
+            return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
         }
 
-        // Оновлення жанрів
-        book.BookGenres.Clear();
-        foreach (var genreId in dto.GenreIds)
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateBook(int id, [FromForm] BookCreateDto dto)
         {
-            book.BookGenres.Add(new BookGenre { GenreId = genreId });
+            await _bookService.UpdateBookAsync(id, dto);
+            return NoContent();
         }
 
-        await _context.SaveChangesAsync();
-        return NoContent();
-    }
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteBook(int id)
+        {
+            await _bookService.DeleteBookAsync(id);
+            return NoContent();
+        }
 
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteBook(int id)
-    {
-        var book = await _context.Books.FindAsync(id);
-        if (book == null) return NotFound();
-
-        _context.Books.Remove(book);
-        await _context.SaveChangesAsync();
-
-        return NoContent();
+        [HttpGet("{id}/content")]
+        public async Task<IActionResult> GetBookContent(int id)
+        {
+            var content = await _bookService.GetBookContentAsync(id);
+            if (content == null) return NotFound();
+            return File(content, "application/octet-stream", $"{id}.txt");
+        }
     }
 }
