@@ -180,8 +180,8 @@
                     <td>{{ book.title }}</td>
                     <td>{{ book.author }}</td>
                     <td>
-                      <span class="badge bg-secondary me-1" *ngFor="let genre of book.genres">
-                        {{ genre.name }}
+                      <span class="badge bg-secondary me-1" *ngFor="let genre of book.genreNames">
+                        {{ genre }}
                       </span>
                     </td>
                     <td>{{ book.yearPublished }}</td>

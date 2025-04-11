@@ -1,7 +1,6 @@
 ﻿using chtfkbibliotek.Server.DTO;
-using chtfkbibliotek.Server.Models;
+using chtfkbibliotek.Server.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace chtfkbibliotek.Server.Controllers
 {
@@ -9,30 +8,18 @@ namespace chtfkbibliotek.Server.Controllers
     [ApiController]
     public class GenreController : ControllerBase
     {
-        private readonly AppDbContext _context;
+        private readonly GenreService _genreService;
 
-        public GenreController(AppDbContext context)
+        public GenreController(GenreService genreService)
         {
-            _context = context;
+            _genreService = genreService;
         }
 
         // GET: api/genre
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GenreDto>>> GetGenres([FromQuery] string? search, int page = 1, int pageSize = 10)
         {
-            var query = _context.Genres.AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                query = query.Where(g => g.Name.ToLower().Contains(search.ToLower()));
-            }
-
-            var genres = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(g => new GenreDto { Id = g.Id, Name = g.Name })
-                .ToListAsync();
-
+            var genres = await _genreService.GetGenresAsync(search, page, pageSize);
             return Ok(genres);
         }
 
@@ -40,26 +27,21 @@ namespace chtfkbibliotek.Server.Controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<GenreDto>> GetGenre(int id)
         {
-            var genre = await _context.Genres.FindAsync(id);
+            var genre = await _genreService.GetGenreAsync(id);
 
             if (genre == null)
                 return NotFound();
 
-            return new GenreDto { Id = genre.Id, Name = genre.Name };
+            return Ok(genre);
         }
-
-        
 
         // DELETE: api/genre/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteGenre(int id)
         {
-            var genre = await _context.Genres.FindAsync(id);
-            if (genre == null)
+            var result = await _genreService.DeleteGenreAsync(id);
+            if (!result)
                 return NotFound();
-
-            _context.Genres.Remove(genre);
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }
