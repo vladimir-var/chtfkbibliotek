@@ -4,7 +4,7 @@ import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { BookService } from '../../core/services/book.service';
-import { Book } from '../../core/models/book.model';
+import { Book, NewBook } from '../../core/models/book.model';
 import { Genre } from '../../core/models/genre.model';
 
 @Component({
@@ -23,17 +23,16 @@ export class AdminComponent implements OnInit {
   messageType: string = 'info';
 
   // Модель форми для нової книги
-  newBook: Partial<Book> = {
+  newBook: NewBook = {
     title: '',
     author: '',
-    genreNames: [],
     yearPublished: new Date().getFullYear(),
     publisher: '',
     pageCount: 0,
     language: 'Українська',
     coverImage: '',
     description: '',
-    content: ''
+    content: null
   };
 
   // Для завантаження тексту книги
@@ -46,6 +45,7 @@ export class AdminComponent implements OnInit {
   fileSelected: boolean = false;
   selectedFileName: string = '';
   fileContent: string = '';
+  fileError: string = '';
 
   constructor(
     private authService: AuthService,
@@ -118,14 +118,9 @@ export class AdminComponent implements OnInit {
       this.selectedGenres.includes(genre.id)
     );
 
-    // Додаємо текст книги з файлу, якщо він був обраний
-    if (this.fileSelected && this.fileContent) {
-      this.newBook.content = this.fileContent;
-    }
-
-    // Створюємо об'єкт для додавання книги без id
-    const bookToAdd: Omit<Book, 'id'> & { genres?: Genre[] } = {
-      ...this.newBook as any,
+    // Создаем объект для добавления книги
+    const bookToAdd: NewBook = {
+      ...this.newBook,
       genres: bookGenres
     };
 
@@ -190,6 +185,12 @@ export class AdminComponent implements OnInit {
       return false;
     }
 
+    if (!this.fileSelected) {
+      this.message = 'Будь ласка, виберіть PDF файл книги.';
+      this.messageType = 'danger';
+      return false;
+    }
+
     if (this.selectedGenres.length === 0) {
       this.message = 'Будь ласка, виберіть хоча б один жанр для книги.';
       this.messageType = 'danger';
@@ -204,14 +205,13 @@ export class AdminComponent implements OnInit {
     this.newBook = {
       title: '',
       author: '',
-      genreNames: [],
       yearPublished: new Date().getFullYear(),
       publisher: '',
       pageCount: 0,
       language: 'Українська',
       coverImage: '',
       description: '',
-      content: ''
+      content: null
     };
     this.selectedGenres = [];
   }
@@ -271,20 +271,34 @@ export class AdminComponent implements OnInit {
   // Обробка вибору файлу
   onFileSelected(event: any): void {
     const file = event.target.files[0];
+    this.fileError = '';
+    
     if (file) {
+      // Проверка расширения
+      if (!file.name.toLowerCase().endsWith('.pdf')) {
+        this.fileError = 'Будь ласка, виберіть файл у форматі PDF';
+        this.fileSelected = false;
+        this.selectedFileName = '';
+        return;
+      }
+
+      // Проверка размера (максимум 50MB)
+      if (file.size > 50 * 1024 * 1024) {
+        this.fileError = 'Розмір файлу не повинен перевищувати 50MB';
+        this.fileSelected = false;
+        this.selectedFileName = '';
+        return;
+      }
+
       this.selectedFileName = file.name;
       this.fileSelected = true;
 
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.fileContent = e.target.result;
-        this.newBook.content = this.fileContent; // Зберігаємо текст в об'єкт нової книги
-      };
-      reader.readAsText(file);
+      // Сохраняем сам файл для отправки
+      this.newBook.content = file;
     } else {
       this.fileSelected = false;
       this.selectedFileName = '';
-      this.fileContent = '';
+      this.newBook.content = null;
     }
   }
 }

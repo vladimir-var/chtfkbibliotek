@@ -14,3 +14,8 @@ export interface Book {
   content?: string;
 }
 
+export interface NewBook extends Omit<Book, 'id' | 'content' | 'genreNames'> {
+  content?: File | null;
+  genres?: Genre[];
+}
+

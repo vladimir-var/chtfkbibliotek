@@ -108,19 +108,23 @@
                 </div>
                 
                 <div class="col-12">
-                  <label for="bookText" class="form-label">Текст книги (завантажити файл)</label>
+                  <label for="bookFile" class="form-label">PDF файл книги*</label>
                   <div class="custom-file-upload">
                     <input 
                       type="file" 
                       class="form-control" 
-                      id="bookText"
+                      id="bookFile"
                       (change)="onFileSelected($event)"
-                      accept=".txt">
+                      accept=".pdf"
+                      required>
                     <div class="form-text" *ngIf="!fileSelected">
-                      Виберіть текстовий файл з текстом книги для завантаження.
+                      Виберіть PDF файл книги для завантаження.
                     </div>
                     <div class="form-text text-success" *ngIf="fileSelected">
                       <i class="fas fa-check-circle me-1"></i> Файл вибрано: {{ selectedFileName }}
+                    </div>
+                    <div class="form-text text-danger" *ngIf="fileError">
+                      {{ fileError }}
                     </div>
                   </div>
                 </div>

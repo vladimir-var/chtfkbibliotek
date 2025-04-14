@@ -90,8 +90,8 @@ export class SidebarFilterComponent implements OnInit {
    * Оновлює глобальні фільтри в BookService, які тригерять запит
    */
   applyFilters(): void {
-    const yearFrom = this.filterForm.get('yearFrom')?.value;
-    const yearTo = this.filterForm.get('yearTo')?.value;
+    const yearFrom = this.filterForm.get('yearFrom')?.value ? Number(this.filterForm.get('yearFrom')?.value) : null;
+    const yearTo = this.filterForm.get('yearTo')?.value ? Number(this.filterForm.get('yearTo')?.value) : null;
 
     this.bookService.updateFilters({
       genres: this.selectedGenres,

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterModule } from '@angular/router';
 import { BookService } from '../../core/services/book.service';
 import { Book } from '../../core/models/book.model';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'app-book-reader',
@@ -17,10 +18,12 @@ export class BookReaderComponent implements OnInit {
   bookContent: string = '';
   isLoading: boolean = true;
   error: string | null = null;
+  pdfUrl: any;
   
   constructor(
     private route: ActivatedRoute,
-    private bookService: BookService
+    private bookService: BookService,
+    private sanitizer: DomSanitizer
   ) {}
   
   ngOnInit(): void {
@@ -54,19 +57,28 @@ export class BookReaderComponent implements OnInit {
 
   loadBookContent(): void {
     this.bookService.getBookContent(this.bookId).subscribe({
-      next: (content) => {
-        // Нормализуем текст и разбиваем на параграфы
-        this.bookContent = content
-          .replace(/\r\n/g, '\n')  // Заменяем Windows переносы на Unix
-          .replace(/\r/g, '\n')    // Заменяем старые Mac переносы на Unix
-          .split('\n')             // Разбиваем на строки
-          .filter(line => line.trim()) // Удаляем пустые строки
-          .join('\n\n');           // Соединяем с двойными переносами
-        this.isLoading = false;
+      next: (blob) => {
+        try {
+          if (!blob || blob.size === 0) {
+            throw new Error('Файл порожній або не знайдено');
+          }
+
+          const url = window.URL.createObjectURL(blob);
+          if (!url) {
+            throw new Error('Не вдалося створити URL для PDF');
+          }
+
+          this.pdfUrl = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+          this.isLoading = false;
+        } catch (error) {
+          console.error('Помилка при обробці PDF:', error);
+          this.error = 'Помилка при обробці PDF файлу.';
+          this.isLoading = false;
+        }
       },
       error: (error) => {
-        console.error('Помилка при завантаженні вмісту книги:', error);
-        this.error = 'Не вдалося завантажити вміст книги.';
+        console.error('Помилка при завантаженні PDF:', error);
+        this.error = 'Не вдалося завантажити PDF файл.';
         this.isLoading = false;
       }
     });
