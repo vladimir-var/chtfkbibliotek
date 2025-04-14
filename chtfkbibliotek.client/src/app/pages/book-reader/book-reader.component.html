@@ -13,16 +13,34 @@
     
     <hr class="my-4">
     
-    <div class="reader-content" *ngIf="book.content">
+    <!-- Состояние загрузки -->
+    <div class="loading-state text-center" *ngIf="isLoading">
+      <div class="spinner-border text-primary mb-3" role="status">
+        <span class="visually-hidden">Завантаження...</span>
+      </div>
+      <p class="mb-0">Завантаження книги...</p>
+    </div>
+
+    <!-- Сообщение об ошибке -->
+    <div class="error-state" *ngIf="error">
+      <div class="alert alert-danger">
+        <i class="fas fa-exclamation-circle me-2"></i>
+        {{ error }}
+      </div>
+    </div>
+    
+    <!-- Содержимое книги -->
+    <div class="reader-content" *ngIf="!isLoading && !error && bookContent">
       <div class="content-text">
-        <ng-container *ngFor="let paragraph of book.content.split('\n')">
+        <ng-container *ngFor="let paragraph of bookContent.split('\n')">
           <p *ngIf="paragraph">{{ paragraph }}</p>
           <br *ngIf="!paragraph">
         </ng-container>
       </div>
     </div>
     
-    <div class="no-content-message" *ngIf="!book.content">
+    <!-- Сообщение об отсутствии содержимого -->
+    <div class="no-content-message" *ngIf="!isLoading && !error && !bookContent">
       <div class="alert alert-info">
         <i class="fas fa-info-circle me-2"></i>
         Текст цієї книги поки що недоступний для читання.
@@ -30,13 +48,13 @@
     </div>
   </div>
   
-  <!-- Loading state -->
+  <!-- Состояние загрузки информации о книге -->
   <div class="container py-5" *ngIf="!book">
     <div class="loading-state text-center">
       <div class="spinner-border text-primary mb-3" role="status">
         <span class="visually-hidden">Завантаження...</span>
       </div>
-      <p class="mb-0">Завантаження книги...</p>
+      <p class="mb-0">Завантаження інформації про книгу...</p>
     </div>
   </div>
 </div>

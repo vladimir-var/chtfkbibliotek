@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@angular/core": "^19.2.6",
+    "ng2-pdf-viewer": "^10.4.0",
+    "ngx-extended-pdf-viewer": "^23.0.0",
+    "pdfjs-dist": "^5.1.91",
+    "rxjs": "^7.8.2"
+  }
+}
