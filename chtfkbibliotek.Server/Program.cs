@@ -19,6 +19,7 @@ builder.Services.AddCors(options =>
 // Добавление сервисов для работы с базой данных и контроллеров
 builder.Services.AddScoped<IBookService, BookService>();
 builder.Services.AddScoped<GenreService>();
+builder.Services.AddScoped<IPdfValidationService, PdfValidationService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {

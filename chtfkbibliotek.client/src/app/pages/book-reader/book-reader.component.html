@@ -1,24 +1,29 @@
 <div class="book-reader-container">
-  <div class="container py-5" *ngIf="book">
-    <div class="mb-4">
-      <a [routerLink]="['/books', book.id]" class="back-link">
-        <i class="fas fa-arrow-left"></i> Повернутися до інформації про книгу
-      </a>
+  <!-- Заголовок с информацией о книге -->
+  <div class="book-header" *ngIf="book">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-auto">
+          <a [routerLink]="['/books', book.id]" class="back-link">
+            <i class="fas fa-arrow-left"></i> Повернутися
+          </a>
+        </div>
+        <div class="col">
+          <h1 class="book-title">{{ book.title }}</h1>
+          <h2 class="book-author">{{ book.author }}</h2>
+        </div>
+      </div>
     </div>
-    
-    <div class="reader-header">
-      <h1 class="book-title">{{ book.title }}</h1>
-      <h2 class="book-author">{{ book.author }}</h2>
-    </div>
-    
-    <hr class="my-4">
-    
+  </div>
+
+  <!-- Основной контент -->
+  <main class="main-content">
     <!-- Состояние загрузки -->
-    <div class="loading-state text-center" *ngIf="isLoading">
-      <div class="spinner-border text-primary mb-3" role="status">
+    <div class="loading-state" *ngIf="isLoading">
+      <div class="spinner-border text-primary" role="status">
         <span class="visually-hidden">Завантаження...</span>
       </div>
-      <p class="mb-0">Завантаження книги...</p>
+      <p>Завантаження PDF...</p>
     </div>
 
     <!-- Сообщение об ошибке -->
@@ -28,33 +33,15 @@
         {{ error }}
       </div>
     </div>
-    
-    <!-- Содержимое книги -->
-    <div class="reader-content" *ngIf="!isLoading && !error && bookContent">
-      <div class="content-text">
-        <ng-container *ngFor="let paragraph of bookContent.split('\n')">
-          <p *ngIf="paragraph">{{ paragraph }}</p>
-          <br *ngIf="!paragraph">
-        </ng-container>
-      </div>
+
+    <!-- PDF просмотрщик -->
+    <div class="pdf-container" *ngIf="!isLoading && !error && pdfUrl">
+      <iframe 
+        [src]="pdfUrl" 
+        class="pdf-viewer"
+        type="application/pdf"
+        frameborder="0">
+      </iframe>
     </div>
-    
-    <!-- Сообщение об отсутствии содержимого -->
-    <div class="no-content-message" *ngIf="!isLoading && !error && !bookContent">
-      <div class="alert alert-info">
-        <i class="fas fa-info-circle me-2"></i>
-        Текст цієї книги поки що недоступний для читання.
-      </div>
-    </div>
-  </div>
-  
-  <!-- Состояние загрузки информации о книге -->
-  <div class="container py-5" *ngIf="!book">
-    <div class="loading-state text-center">
-      <div class="spinner-border text-primary mb-3" role="status">
-        <span class="visually-hidden">Завантаження...</span>
-      </div>
-      <p class="mb-0">Завантаження інформації про книгу...</p>
-    </div>
-  </div>
+  </main>
 </div>

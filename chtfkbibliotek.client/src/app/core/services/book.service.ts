@@ -1,11 +1,25 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
-import { Book } from '../models/book.model';
+import { Book, NewBook } from '../models/book.model';
 import { Genre } from '../models/genre.model';
 import { catchError, map } from 'rxjs/operators';
 import { throwError } from 'rxjs';
 
+export class BookServiceError extends Error {
+  constructor(
+    message: string,
+    public statusCode?: number,
+    public type: 'NotFound' | 'ValidationError' | 'ServerError' = 'ServerError'
+  ) {
+    super(message);
+    this.name = 'BookServiceError';
+  }
+
+  override get message(): string {
+    return super.message;
+  }
+}
 
 export interface BookFilters {
   genres: number[];
@@ -40,7 +54,14 @@ export class BookService {
 
   // Отримати книгу за її ID
   getBookById(id: number): Observable<Book> {
-    return this.http.get<Book>(`${this.apiUrl}/books/${id}`);
+    return this.http.get<Book>(`${this.apiUrl}/books/${id}`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          return throwError(() => new BookServiceError('Книга не знайдена', 404, 'NotFound'));
+        }
+        return throwError(() => new BookServiceError('Помилка при отриманні книги', error.status));
+      })
+    );
   }
 
   // Отримати всі жанри
@@ -48,8 +69,8 @@ export class BookService {
     return this.http.get<Genre[]>(`${this.apiUrl}/genre`);
   }
 
-  // Додати нову книгу (без поля id)
-  addBook(book: Omit<Book, 'id'> & { genres?: Genre[] }): Observable<Book> {
+  // Додати нову книгу
+  addBook(book: NewBook): Observable<Book> {
     const url = `${this.apiUrl}/books`;
     const formData = new FormData();
 
@@ -72,20 +93,33 @@ export class BookService {
 
     // Добавляем файл, если он есть
     if (book.content) {
-      const blob = new Blob([book.content], { type: 'text/plain' });
-      formData.append('file', blob, 'book.txt');
+      formData.append('file', book.content);
     }
 
     return this.http.post<Book>(url, formData).pipe(
-      catchError(error => {
-        console.error('Помилка при додаванні книги:', error);
-        return throwError(() => new Error('Не вдалося додати книгу.'));
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 400) {
+          return throwError(() => new BookServiceError(
+            error.error || 'Помилка валідації даних',
+            400,
+            'ValidationError'
+          ));
+        }
+        return throwError(() => new BookServiceError('Помилка при додаванні книги', error.status));
       })
     );
   }
+
   // Видалити книгу за її ID
   deleteBook(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/books/${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/books/${id}`).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          return throwError(() => new BookServiceError('Книга не знайдена', 404, 'NotFound'));
+        }
+        return throwError(() => new BookServiceError('Помилка при видаленні книги', error.status));
+      })
+    );
   }
 
   /**
@@ -110,14 +144,25 @@ export class BookService {
       params = params.set('search', filters.search);
     }
 
+    console.log('Отправка запроса с параметрами:', params.toString());
+
     return this.http.get<Book[]>(`${this.apiUrl}/books`, { params }).pipe(
-      catchError(error => {
-        console.error('Помилка запиту до API:', error); // Вивести помилку у консоль
-        return throwError(() => new Error('Сталася помилка при отриманні книг')); // Повернути Observable з помилкою
+      map(books => {
+        console.log('Получены книги:', books);
+        return books;
+      }),
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 400) {
+          return throwError(() => new BookServiceError(
+            'Помилка у параметрах фільтрації',
+            400,
+            'ValidationError'
+          ));
+        }
+        return throwError(() => new BookServiceError('Помилка при отриманні книг', error.status));
       })
     );
   }
-
 
   /**
    * Оновлює фільтри та автоматично отримує новий список книг за цими фільтрами.
@@ -147,15 +192,25 @@ export class BookService {
   }
 
   // Отримати вміст книги за її ID
-  getBookContent(id: number): Observable<string> {
-    return this.http.get(`${this.apiUrl}/books/${id}/content`, { responseType: 'arraybuffer' }).pipe(
-      map(response => {
-        const decoder = new TextDecoder('utf-8');
-        return decoder.decode(response);
-      }),
-      catchError(error => {
-        console.error('Помилка при отриманні вмісту книги:', error);
-        return throwError(() => new Error('Не вдалося отримати вміст книги.'));
+  getBookContent(bookId: number): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/books/${bookId}/content`, { 
+      responseType: 'blob',
+      headers: new HttpHeaders({
+        'Accept': 'application/pdf'
+      })
+    }).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          return throwError(() => new BookServiceError('Книга не знайдена', 404, 'NotFound'));
+        }
+        if (error.status === 400) {
+          return throwError(() => new BookServiceError(
+            error.error || 'Помилка при отриманні вмісту книги',
+            400,
+            'ValidationError'
+          ));
+        }
+        return throwError(() => new BookServiceError('Помилка при отриманні вмісту книги', error.status));
       })
     );
   }

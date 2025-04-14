@@ -6,13 +6,14 @@ import { BookService } from '../../core/services/book.service';
 import { Book } from '../../core/models/book.model';
 import { Genre } from '../../core/models/genre.model';
 import { BookCardComponent } from '../../shared/book-card/book-card.component';
+import { SidebarFilterComponent } from '../../shared/sidebar-filter/sidebar-filter.component';
 
 @Component({
   selector: 'app-book-search',
   templateUrl: './book-search.component.html',
   styleUrls: ['./book-search.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, BookCardComponent]
+  imports: [CommonModule, RouterModule, FormsModule, BookCardComponent, SidebarFilterComponent]
 })
 export class BookSearchComponent implements OnInit {
   books: Book[] = [];             // Список книг
