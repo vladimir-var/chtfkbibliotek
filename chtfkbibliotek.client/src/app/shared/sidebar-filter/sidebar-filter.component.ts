@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Genre } from '../../core/models/genre.model';
 import { BookService } from '../../core/services/book.service';
 
@@ -12,31 +12,34 @@ import { BookService } from '../../core/services/book.service';
   imports: [CommonModule, ReactiveFormsModule]
 })
 export class SidebarFilterComponent implements OnInit {
-  genres: Genre[] = [];
-  years: number[] = [];
-  selectedGenres: number[] = [];
-  filterForm: FormGroup;
-  
+  genres: Genre[] = []; // Список жанрів для чекбоксів
+  years: number[] = []; // Список років для селектів
+  selectedGenres: number[] = []; // Локально вибрані жанри
+  filterForm: FormGroup; // Реактивна форма для років
+
+  // Поточні фільтри з BookService
   private currentFilters: {
     genres: number[],
     yearFrom: number | null,
     yearTo: number | null,
+    search?: string
   } = {
-    genres: [],
-    yearFrom: null,
-    yearTo: null
-  };
+      genres: [],
+      yearFrom: null,
+      yearTo: null
+    };
 
   constructor(
     private bookService: BookService,
     private fb: FormBuilder
   ) {
+    // Ініціалізація форми
     this.filterForm = this.fb.group({
       yearFrom: [null],
       yearTo: [null]
     });
 
-    // Generate years for dropdown (1900 to current year)
+    // Створюємо список років від поточного до 1900
     const currentYear = new Date().getFullYear();
     for (let year = currentYear; year >= 1900; year--) {
       this.years.push(year);
@@ -44,22 +47,17 @@ export class SidebarFilterComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    // Load genres for filter
+    // Завантаження жанрів
     this.bookService.getAllGenres().subscribe(genres => {
       this.genres = genres;
     });
 
-    // Subscribe to current filters
-    this.bookService.filters$.subscribe((filters: {
-      genres: number[],
-      yearFrom: number | null,
-      yearTo: number | null,
-      search?: string
-    }) => {
+    // Підписка на глобальні фільтри (щоб оновити локальні дані у формі)
+    this.bookService.filters$.subscribe(filters => {
       this.currentFilters = filters;
       this.selectedGenres = [...filters.genres];
-      
-      // Update form controls without triggering events
+
+      // Оновлюємо значення форми без запуску подій
       this.filterForm.patchValue({
         yearFrom: filters.yearFrom,
         yearTo: filters.yearTo
@@ -67,6 +65,10 @@ export class SidebarFilterComponent implements OnInit {
     });
   }
 
+  /**
+   * Обробка кліку по чекбоксу жанру — додає або видаляє жанр з масиву selectedGenres
+   * Ця функція не викликає фільтрацію одразу
+   */
   onGenreChange(genreId: number): void {
     const index = this.selectedGenres.indexOf(genreId);
     if (index === -1) {
@@ -74,13 +76,19 @@ export class SidebarFilterComponent implements OnInit {
     } else {
       this.selectedGenres.splice(index, 1);
     }
-    this.applyFilters();
   }
 
+  /**
+   * Перевірка, чи жанр вибраний — для відображення стану чекбоксу
+   */
   isGenreSelected(genreId: number): boolean {
     return this.selectedGenres.includes(genreId);
   }
 
+  /**
+   * Викликається при натисканні на кнопку "Застосувати"
+   * Оновлює глобальні фільтри в BookService, які тригерять запит
+   */
   applyFilters(): void {
     const yearFrom = this.filterForm.get('yearFrom')?.value;
     const yearTo = this.filterForm.get('yearTo')?.value;
@@ -92,6 +100,10 @@ export class SidebarFilterComponent implements OnInit {
     });
   }
 
+  /**
+   * Викликається при натисканні на кнопку "Скинути"
+   * Очищає локальні дані та оновлює фільтри на дефолтні
+   */
   resetFilters(): void {
     this.selectedGenres = [];
     this.filterForm.patchValue({
@@ -101,6 +113,9 @@ export class SidebarFilterComponent implements OnInit {
     this.bookService.resetFilters();
   }
 
+  /**
+   * Перевіряє, чи є активні фільтри (використовується для відображення кнопки "Скинути")
+   */
   hasActiveFilters(): boolean {
     return (
       this.currentFilters.genres.length > 0 ||

@@ -6,7 +6,6 @@ import { BookService } from '../../core/services/book.service';
 import { Book } from '../../core/models/book.model';
 import { Genre } from '../../core/models/genre.model';
 import { BookCardComponent } from '../../shared/book-card/book-card.component';
-import { forkJoin } from 'rxjs'; // Для параллельных запросов
 
 @Component({
   selector: 'app-book-search',
@@ -16,120 +15,111 @@ import { forkJoin } from 'rxjs'; // Для параллельных запрос
   imports: [CommonModule, RouterModule, FormsModule, BookCardComponent]
 })
 export class BookSearchComponent implements OnInit {
-  books: Book[] = [];
-  genres: Genre[] = [];
-  selectedGenres: number[] = [];
-  yearFrom: number | null = null;
-  yearTo: number | null = null;
-  searchTerm: string = '';
-  isLoading: boolean = false;
-  isMobileFiltersShown: boolean = true;
+  books: Book[] = [];             // Список книг
+  genres: Genre[] = [];           // Список жанрів
+  selectedGenres: number[] = [];  // Обрані жанри
+  yearFrom: number | null = null; // Рік "від"
+  yearTo: number | null = null;   // Рік "до"
+  searchTerm = '';                // Пошуковий запит
+  isLoading = false;              // Індикатор завантаження
+  isMobileFiltersShown = true;    // Показ фільтрів на мобільному
 
   constructor(private bookService: BookService) { }
 
   ngOnInit(): void {
-    this.loadData();
-  }
-
-  loadData(): void {
     this.isLoading = true;
 
-    forkJoin({
-      genres: this.bookService.getAllGenres(),
-      books: this.bookService.getAllBooks()
-    }).subscribe(
-      ({ genres, books }) => {
-        console.log('Genres:', genres);  // Логируем жанры
-        console.log('Books:', books);    // Логируем книги
-        this.genres = genres;
-        this.books = books;
-        this.isLoading = false;
-      },
-      (error) => {
-        console.error('Error loading data:', error);
-        this.isLoading = false;
-      }
-    );
+    // Завантажити жанри
+    this.bookService.getAllGenres().subscribe(genres => this.genres = genres);
 
+    // Отримати книги (початкове завантаження)
+    this.bookService.filteredBooks$.subscribe(books => {
+      this.books = books;
+      this.isLoading = false;
+    });
+
+    // Завантажити всі книги без фільтрів
+    this.bookService.resetFilters();
   }
 
+  /**
+   * Перемкнути вибір жанру (не викликає фільтрацію автоматично)
+   */
   toggleGenre(genreId: number): void {
     const index = this.selectedGenres.indexOf(genreId);
-    if (index > -1) {
+    if (index >= 0) {
       this.selectedGenres.splice(index, 1);
     } else {
       this.selectedGenres.push(genreId);
     }
-    this.applyFilters();
+    // applyFilters() не викликається тут
   }
 
+  /**
+   * Видалити жанр з вибраних (не застосовує фільтри автоматично)
+   */
+  removeGenreFilter(name: string): void {
+    const genre = this.genres.find(g => g.name === name);
+    if (!genre) return;
+    this.selectedGenres = this.selectedGenres.filter(id => id !== genre.id);
+    // applyFilters() не викликається тут
+  }
+
+  /**
+   * Отримати список назв обраних жанрів (для візуалізації)
+   */
   getSelectedGenreNames(): string[] {
-    return this.selectedGenres.map(id => {
-      const genre = this.genres.find(g => g.id === id);
-      return genre ? genre.name : '';
-    }).filter(name => name !== '');
+    return this.selectedGenres
+      .map(id => this.genres.find(g => g.id === id)?.name || '')
+      .filter(name => !!name);
   }
 
-  removeGenreFilter(genreName: string): void {
-    const genre = this.genres.find(g => g.name === genreName);
-    if (genre) {
-      const index = this.selectedGenres.indexOf(genre.id);
-      if (index > -1) {
-        this.selectedGenres.splice(index, 1);
-        this.applyFilters();
-      }
-    }
-  }
-
+  /**
+   * Застосувати фільтри (єдиний момент, коли відбувається запит до сервера)
+   */
   applyFilters(): void {
     this.isLoading = true;
-    const filters = {
+    this.bookService.updateFilters({
       genres: this.selectedGenres,
       yearFrom: this.yearFrom,
       yearTo: this.yearTo,
       search: this.searchTerm
-    };
-
-    this.bookService.getFilteredBooks(filters).subscribe(
-      (books) => {
-        this.books = books;
-        this.isLoading = false;
-      },
-      (error) => {
-        console.error('Error applying filters:', error);
-        this.isLoading = false;
-      }
-    );
+    });
   }
 
+  /**
+   * Скинути всі фільтри (жанри, роки, пошук)
+   */
   resetFilters(): void {
     this.selectedGenres = [];
     this.yearFrom = null;
     this.yearTo = null;
     this.searchTerm = '';
     this.isLoading = true;
-
-    this.bookService.getAllBooks().subscribe(
-      (books) => {
-        this.books = books;
-        this.isLoading = false;
-      },
-      (error) => {
-        console.error('Error resetting filters:', error);
-        this.isLoading = false;
-      }
-    );
+    this.bookService.resetFilters();
   }
 
+  /**
+   * Обробити натискання кнопки пошуку
+   */
   search(): void {
     this.applyFilters();
   }
 
+  /**
+   * Перемикання показу мобільних фільтрів
+   */
   toggleMobileFilters(): void {
     this.isMobileFiltersShown = !this.isMobileFiltersShown;
   }
 
+  /**
+   * Перевірка: чи активні фільтри (для кнопки "Скинути")
+   */
   hasActiveFilters(): boolean {
-    return this.selectedGenres.length > 0 || this.yearFrom !== null || this.yearTo !== null || this.searchTerm !== '';
+    return this.selectedGenres.length > 0
+      || this.yearFrom !== null
+      || this.yearTo !== null
+      || this.searchTerm.trim() !== '';
   }
 }

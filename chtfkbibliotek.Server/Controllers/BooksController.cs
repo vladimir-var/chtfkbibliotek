@@ -70,7 +70,9 @@ namespace chtfkbibliotek.Server.Controllers
         {
             var content = await _bookService.GetBookContentAsync(id);
             if (content == null) return NotFound();
-            return File(content, "application/octet-stream", $"{id}.txt");
+            // Заменили application/octet-stream и .txt на application/pdf и .pdf
+            return File(content, "application/pdf", $"{id}.pdf");
         }
+
     }
 }

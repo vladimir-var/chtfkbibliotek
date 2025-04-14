@@ -98,16 +98,21 @@ public class BookService : IBookService
 
     public async Task<BookDto> CreateBookAsync(BookCreateDto dto)
     {
+        if (dto == null)
+        {
+            throw new ArgumentNullException(nameof(dto), "DTO не может быть null");
+        }
+
         var book = new Book
         {
-            Title = dto.Title,
-            Author = dto.Author,
+            Title = dto.Title ?? throw new ArgumentException("Title не может быть null"),
+            Author = dto.Author ?? throw new ArgumentException("Author не может быть null"),
             YearPublished = dto.YearPublished,
             Publisher = dto.Publisher,
             PageCount = dto.PageCount,
-            Language = dto.Language,
+            Language = dto.Language ?? throw new ArgumentException("Language не может быть null"),
             CoverImage = dto.CoverImage,
-            Description = dto.Description
+            Description = dto.Description ?? throw new ArgumentException("Description не может быть null")
         };
 
         if (dto.File != null)
@@ -117,11 +122,28 @@ public class BookService : IBookService
             book.Content = ms.ToArray();
         }
 
-        foreach (var genreId in dto.GenreIds)
+        // Проверяем, что GenreIds не null и содержит элементы
+        if (dto.GenreIds == null || !dto.GenreIds.Any())
+        {
+            throw new ArgumentException("Необходимо указать хотя бы один жанр");
+        }
+
+        // Загружаем жанры из базы данных
+        var genres = await _context.Genres
+            .Where(g => dto.GenreIds.Contains(g.Id))
+            .ToListAsync();
+
+        if (genres.Count != dto.GenreIds.Count)
+        {
+            throw new ArgumentException("Один или несколько указанных жанров не найдены в базе данных");
+        }
+
+        foreach (var genre in genres)
         {
             book.BookGenres.Add(new BookGenre
             {
-                GenreId = genreId
+                GenreId = genre.Id,
+                Genre = genre
             });
         }
 

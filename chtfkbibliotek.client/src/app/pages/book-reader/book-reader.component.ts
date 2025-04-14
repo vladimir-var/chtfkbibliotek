@@ -14,6 +14,9 @@ import { Book } from '../../core/models/book.model';
 export class BookReaderComponent implements OnInit {
   book: Book | undefined;
   bookId: number = 0;
+  bookContent: string = '';
+  isLoading: boolean = true;
+  error: string | null = null;
   
   constructor(
     private route: ActivatedRoute,
@@ -31,8 +34,41 @@ export class BookReaderComponent implements OnInit {
   }
   
   loadBook(): void {
-    this.bookService.getBookById(this.bookId).subscribe(book => {
-      this.book = book;
+    this.isLoading = true;
+    this.error = null;
+
+    // Загружаем информацию о книге
+    this.bookService.getBookById(this.bookId).subscribe({
+      next: (book) => {
+        this.book = book;
+        // Загружаем содержимое книги
+        this.loadBookContent();
+      },
+      error: (error) => {
+        console.error('Помилка при завантаженні книги:', error);
+        this.error = 'Не вдалося завантажити інформацію про книгу.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  loadBookContent(): void {
+    this.bookService.getBookContent(this.bookId).subscribe({
+      next: (content) => {
+        // Нормализуем текст и разбиваем на параграфы
+        this.bookContent = content
+          .replace(/\r\n/g, '\n')  // Заменяем Windows переносы на Unix
+          .replace(/\r/g, '\n')    // Заменяем старые Mac переносы на Unix
+          .split('\n')             // Разбиваем на строки
+          .filter(line => line.trim()) // Удаляем пустые строки
+          .join('\n\n');           // Соединяем с двойными переносами
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Помилка при завантаженні вмісту книги:', error);
+        this.error = 'Не вдалося завантажити вміст книги.';
+        this.isLoading = false;
+      }
     });
   }
 }
