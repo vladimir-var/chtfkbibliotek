@@ -26,6 +26,8 @@ export interface BookFilters {
   yearFrom: number | null;
   yearTo: number | null;
   search?: string;
+  page: number;
+  pageSize: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -37,13 +39,19 @@ export class BookService {
     genres: [],
     yearFrom: null,
     yearTo: null,
-    search: ''
+    search: '',
+    page: 1,
+    pageSize: 10
   });
   filters$ = this.filtersSubject.asObservable();
 
   // Стан відфільтрованих книг з можливістю підписки
   private filteredBooksSubject = new BehaviorSubject<Book[]>([]);
   filteredBooks$ = this.filteredBooksSubject.asObservable();
+
+  // Стан пагінації
+  private paginationSubject = new BehaviorSubject<{ totalItems: number, totalPages: number }>({ totalItems: 0, totalPages: 0 });
+  pagination$ = this.paginationSubject.asObservable();
 
   constructor(private http: HttpClient) { }
 
@@ -143,15 +151,29 @@ export class BookService {
     if (filters.search) {
       params = params.set('search', filters.search);
     }
+    params = params.set('page', filters.page.toString());
+    params = params.set('pageSize', filters.pageSize.toString());
 
     console.log('Отправка запроса с параметрами:', params.toString());
 
-    return this.http.get<Book[]>(`${this.apiUrl}/books`, { params }).pipe(
-      map(books => {
-        console.log('Получены книги:', books);
+    return this.http.get<Book[]>(`${this.apiUrl}/books`, { params, observe: 'response' }).pipe(
+      map(response => {
+        const books = response.body || [];
+        console.log('Получен ответ от сервера:', books);
+        
+        // Получаем заголовки пагинации
+        const totalCount = parseInt(response.headers.get('X-Total-Count') || '0', 10);
+        
+        // Обновляем пагинацию
+        this.paginationSubject.next({
+          totalItems: totalCount,
+          totalPages: Math.ceil(totalCount / filters.pageSize)
+        });
+        
         return books;
       }),
       catchError((error: HttpErrorResponse) => {
+        console.error('Ошибка при получении книг:', error);
         if (error.status === 400) {
           return throwError(() => new BookServiceError(
             'Помилка у параметрах фільтрації',
@@ -171,8 +193,14 @@ export class BookService {
   updateFilters(filters: BookFilters): void {
     this.filtersSubject.next(filters);
 
-    this.getFilteredBooks(filters).subscribe((books) => {
-      this.filteredBooksSubject.next(books);
+    this.getFilteredBooks(filters).subscribe({
+      next: (books) => {
+        this.filteredBooksSubject.next(books);
+      },
+      error: (error) => {
+        console.error('Ошибка при получении книг:', error);
+        this.filteredBooksSubject.next([]); // В случае ошибки устанавливаем пустой массив
+      }
     });
   }
 
@@ -181,13 +209,17 @@ export class BookService {
    * Використовується кнопкою "Скинути фільтри".
    */
   resetFilters(): void {
+    console.log('Сброс фильтров');
     const defaultFilters: BookFilters = {
       genres: [],
       yearFrom: null,
       yearTo: null,
-      search: ''
+      search: '',
+      page: 1,
+      pageSize: 10
     };
 
+    console.log('Применение фильтров по умолчанию:', defaultFilters);
     this.updateFilters(defaultFilters);
   }
 

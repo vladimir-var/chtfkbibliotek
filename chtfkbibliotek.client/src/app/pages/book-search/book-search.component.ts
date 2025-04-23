@@ -25,21 +25,56 @@ export class BookSearchComponent implements OnInit {
   isLoading = false;              // Індикатор завантаження
   isMobileFiltersShown = true;    // Показ фільтрів на мобільному
 
+  // Пагінація
+  currentPage = 1;
+  pageSize = 10;
+  totalItems = 0;
+  totalPages = 0;
+
   constructor(private bookService: BookService) { }
 
   ngOnInit(): void {
     this.isLoading = true;
+    console.log('Инициализация BookSearchComponent');
 
-    // Завантажити жанри
-    this.bookService.getAllGenres().subscribe(genres => this.genres = genres);
-
-    // Отримати книги (початкове завантаження)
-    this.bookService.filteredBooks$.subscribe(books => {
-      this.books = books;
-      this.isLoading = false;
+    // Загружаем жанры
+    this.bookService.getAllGenres().subscribe({
+      next: (genres) => {
+        console.log('Загружены жанры:', genres);
+        this.genres = genres;
+      },
+      error: (error) => {
+        console.error('Ошибка при загрузке жанров:', error);
+        this.genres = [];
+      }
     });
 
-    // Завантажити всі книги без фільтрів
+    // Подписываемся на отфильтрованные книги
+    this.bookService.filteredBooks$.subscribe({
+      next: (books) => {
+        console.log('Получены книги:', books);
+        this.books = books || [];
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Ошибка при загрузке книг:', error);
+        this.books = [];
+        this.isLoading = false;
+      }
+    });
+
+    // Подписываемся на изменения пагинации
+    this.bookService.pagination$.subscribe({
+      next: (pagination) => {
+        console.log('Получена пагинация:', pagination);
+        this.totalItems = pagination.totalItems;
+        this.totalPages = pagination.totalPages;
+      },
+      error: (error) => console.error('Ошибка при загрузке пагинации:', error)
+    });
+
+    // Загружаем все книги без фильтров
+    console.log('Вызов resetFilters');
     this.bookService.resetFilters();
   }
 
@@ -80,11 +115,14 @@ export class BookSearchComponent implements OnInit {
    */
   applyFilters(): void {
     this.isLoading = true;
+    this.currentPage = 1; // Скидаємо на першу сторінку при новому пошуку
     this.bookService.updateFilters({
       genres: this.selectedGenres,
       yearFrom: this.yearFrom,
       yearTo: this.yearTo,
-      search: this.searchTerm
+      search: this.searchTerm,
+      page: this.currentPage,
+      pageSize: this.pageSize
     });
   }
 
@@ -96,6 +134,7 @@ export class BookSearchComponent implements OnInit {
     this.yearFrom = null;
     this.yearTo = null;
     this.searchTerm = '';
+    this.currentPage = 1;
     this.isLoading = true;
     this.bookService.resetFilters();
   }
@@ -122,5 +161,43 @@ export class BookSearchComponent implements OnInit {
       || this.yearFrom !== null
       || this.yearTo !== null
       || this.searchTerm.trim() !== '';
+  }
+
+  /**
+   * Змінити сторінку
+   */
+  changePage(page: number): void {
+    if (page < 1 || page > this.totalPages) return;
+    
+    this.currentPage = page;
+    this.isLoading = true;
+    this.bookService.updateFilters({
+      genres: this.selectedGenres,
+      yearFrom: this.yearFrom,
+      yearTo: this.yearTo,
+      search: this.searchTerm,
+      page: this.currentPage,
+      pageSize: this.pageSize
+    });
+  }
+
+  /**
+   * Отримати масив номерів сторінок для відображення
+   */
+  getPageNumbers(): number[] {
+    const pages: number[] = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return pages;
   }
 }

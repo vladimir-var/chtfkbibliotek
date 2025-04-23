@@ -210,4 +210,48 @@ public class BookService : IBookService
 
         return book.Content;
     }
+
+    public async Task<int> GetTotalCountAsync(BookFilterParameters filter)
+    {
+        var query = _context.Books
+            .Include(b => b.BookGenres)
+            .ThenInclude(bg => bg.Genre)
+            .AsQueryable();
+
+        // Фільтрація
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var searchLower = filter.Search.ToLower();
+            query = query.Where(b =>
+                b.Title.ToLower().Contains(searchLower) ||
+                b.Author.ToLower().Contains(searchLower));
+        }
+
+        if (filter.GenreId.HasValue)
+        {
+            query = query.Where(b => b.BookGenres.Any(bg => bg.GenreId == filter.GenreId.Value));
+        }
+
+        if (filter.YearFrom.HasValue)
+        {
+            query = query.Where(b => b.YearPublished >= filter.YearFrom.Value);
+        }
+
+        if (filter.YearTo.HasValue)
+        {
+            query = query.Where(b => b.YearPublished <= filter.YearTo.Value);
+        }
+
+        if (filter.MinPageCount.HasValue)
+        {
+            query = query.Where(b => b.PageCount >= filter.MinPageCount.Value);
+        }
+
+        if (filter.MaxPageCount.HasValue)
+        {
+            query = query.Where(b => b.PageCount <= filter.MaxPageCount.Value);
+        }
+
+        return await query.CountAsync();
+    }
 }

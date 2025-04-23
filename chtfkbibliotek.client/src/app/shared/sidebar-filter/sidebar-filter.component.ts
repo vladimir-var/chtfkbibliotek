@@ -96,7 +96,9 @@ export class SidebarFilterComponent implements OnInit {
     this.bookService.updateFilters({
       genres: this.selectedGenres,
       yearFrom: yearFrom,
-      yearTo: yearTo
+      yearTo: yearTo,
+      page: 1,
+      pageSize: 10
     });
   }
 
