@@ -41,6 +41,9 @@ namespace chtfkbibliotek.Server.Controllers
             };
 
             var books = await _bookService.GetBooksAsync(filter);
+            var totalCount = await _bookService.GetTotalCountAsync(filter);
+            
+            Response.Headers.Add("X-Total-Count", totalCount.ToString());
             return Ok(books);
         }
 

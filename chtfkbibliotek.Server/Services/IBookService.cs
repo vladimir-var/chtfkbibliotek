@@ -10,4 +10,5 @@ public interface IBookService
     Task UpdateBookAsync(int id, BookCreateDto dto);
     Task DeleteBookAsync(int id);
     Task<byte[]> GetBookContentAsync(int id);
+    Task<int> GetTotalCountAsync(BookFilterParameters filter);
 }
