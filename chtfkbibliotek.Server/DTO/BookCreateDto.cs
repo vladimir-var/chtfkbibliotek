@@ -26,9 +26,6 @@ namespace chtfkbibliotek.Server.DTO
 
         public IFormFile? File { get; set; }
 
-        [Required]
-        public int CategoryId { get; set; }
-
-        public int? SubcategoryId { get; set; }
+        public List<int> GenreIds { get; set; } = new();
     }
 }

@@ -4,22 +4,22 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Налаштування CORS
+// Добавление CORS
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        // Дозволяємо всі джерела, методи та заголовки
+        // Разрешаем все источники, методы и заголовки
         policy.AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
 });
 
-// Додавання сервісів для роботи з базою даних та контролерів
+// Добавление сервисов для работы с базой данных и контроллеров
 builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddScoped<GenreService>();
 builder.Services.AddScoped<IPdfValidationService, PdfValidationService>();
-builder.Services.AddScoped<ISubcategoryService, SubcategoryService>();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
@@ -32,29 +32,13 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Застосування міграцій
-using (var scope = app.Services.CreateScope())
-{
-    var services = scope.ServiceProvider;
-    try
-    {
-        var context = services.GetRequiredService<AppDbContext>();
-        context.Database.Migrate();
-    }
-    catch (Exception ex)
-    {
-        var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Сталася помилка при застосуванні міграцій.");
-    }
-}
-
-// Застосування CORS
+// Применение CORS
 app.UseCors("AllowAll");
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-// Конфігурація обробки HTTP-запитів
+// Конфигурация пайплайна обработки HTTP-запросов
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
