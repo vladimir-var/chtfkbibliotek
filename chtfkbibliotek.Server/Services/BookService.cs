@@ -21,8 +21,8 @@ public class BookService : IBookService
     public async Task<IEnumerable<BookDto>> GetBooksAsync(BookFilterParameters filter)
     {
         var query = _context.Books
-            .Include(b => b.BookGenres)
-            .ThenInclude(bg => bg.Genre)
+            .Include(b => b.Category)
+            .Include(b => b.Subcategory)
             .AsQueryable();
 
         // Фільтрація
@@ -34,9 +34,14 @@ public class BookService : IBookService
                 b.Author.ToLower().Contains(searchLower));
         }
 
-        if (filter.GenreId.HasValue)
+        if (filter.CategoryId.HasValue)
         {
-            query = query.Where(b => b.BookGenres.Any(bg => bg.GenreId == filter.GenreId.Value));
+            query = query.Where(b => b.CategoryId == filter.CategoryId.Value);
+        }
+
+        if (filter.SubcategoryId.HasValue)
+        {
+            query = query.Where(b => b.SubcategoryId == filter.SubcategoryId.Value);
         }
 
         if (filter.YearFrom.HasValue)
@@ -75,7 +80,8 @@ public class BookService : IBookService
                 Language = b.Language,
                 CoverImage = b.CoverImage,
                 Description = b.Description,
-                GenreNames = b.BookGenres.Select(bg => bg.Genre.Name).ToList()
+                CategoryName = b.Category.Name,
+                SubcategoryName = b.Subcategory != null ? b.Subcategory.Name : null
             })
             .ToListAsync();
 
@@ -85,12 +91,12 @@ public class BookService : IBookService
     public async Task<BookDto> GetBookAsync(int id)
     {
         var book = await _context.Books
-            .Include(b => b.BookGenres)
-            .ThenInclude(bg => bg.Genre)
+            .Include(b => b.Category)
+            .Include(b => b.Subcategory)
             .FirstOrDefaultAsync(b => b.Id == id);
 
         if (book == null)
-            throw new KeyNotFoundException($"Книга с ID {id} не найдена");
+            throw new KeyNotFoundException($"Книга з ID {id} не знайдена");
 
         return new BookDto
         {
@@ -103,7 +109,8 @@ public class BookService : IBookService
             Language = book.Language,
             CoverImage = book.CoverImage,
             Description = book.Description,
-            GenreNames = book.BookGenres.Select(bg => bg.Genre.Name).ToList()
+            CategoryName = book.Category.Name,
+            SubcategoryName = book.Subcategory != null ? book.Subcategory.Name : null
         };
     }
 
@@ -112,40 +119,36 @@ public class BookService : IBookService
         if (dto == null)
             throw new ArgumentNullException(nameof(dto));
 
+        var category = await _context.Categories.FindAsync(dto.CategoryId);
+        if (category == null)
+            throw new ArgumentException("Вказана категорія не існує");
+
+        if (dto.SubcategoryId.HasValue)
+        {
+            var subcategory = await _context.Subcategories.FindAsync(dto.SubcategoryId.Value);
+            if (subcategory == null)
+                throw new ArgumentException("Вказана підкатегорія не існує");
+            if (subcategory.CategoryId != dto.CategoryId)
+                throw new ArgumentException("Підкатегорія не належить до вказаної категорії");
+        }
+
         var book = new Book
         {
-            Title = dto.Title ?? throw new ArgumentException("Title не может быть null"),
-            Author = dto.Author ?? throw new ArgumentException("Author не может быть null"),
+            Title = dto.Title ?? throw new ArgumentException("Назва не може бути порожньою"),
+            Author = dto.Author ?? throw new ArgumentException("Автор не може бути порожнім"),
             YearPublished = dto.YearPublished,
             Publisher = dto.Publisher,
             PageCount = dto.PageCount,
-            Language = dto.Language ?? throw new ArgumentException("Language не может быть null"),
+            Language = dto.Language ?? throw new ArgumentException("Мова не може бути порожньою"),
             CoverImage = dto.CoverImage,
-            Description = dto.Description ?? throw new ArgumentException("Description не может быть null")
+            Description = dto.Description ?? throw new ArgumentException("Опис не може бути порожнім"),
+            CategoryId = dto.CategoryId,
+            SubcategoryId = dto.SubcategoryId
         };
 
         if (dto.File != null)
         {
             book.Content = await _pdfValidationService.ValidateAndGetContentAsync(dto.File);
-        }
-
-        if (dto.GenreIds == null || !dto.GenreIds.Any())
-            throw new ArgumentException("Необходимо указать хотя бы один жанр");
-
-        var genres = await _context.Genres
-            .Where(g => dto.GenreIds.Contains(g.Id))
-            .ToListAsync();
-
-        if (genres.Count != dto.GenreIds.Count)
-            throw new ArgumentException("Один или несколько указанных жанров не найдены в базе данных");
-
-        foreach (var genre in genres)
-        {
-            book.BookGenres.Add(new BookGenre
-            {
-                GenreId = genre.Id,
-                Genre = genre
-            });
         }
 
         _context.Books.Add(book);
@@ -157,33 +160,38 @@ public class BookService : IBookService
     public async Task UpdateBookAsync(int id, BookCreateDto dto)
     {
         var book = await _context.Books
-            .Include(b => b.BookGenres)
             .FirstOrDefaultAsync(b => b.Id == id);
 
         if (book == null)
-            throw new KeyNotFoundException($"Книга с ID {id} не найдена");
+            throw new KeyNotFoundException($"Книга з ID {id} не знайдена");
 
-        book.Title = dto.Title ?? throw new ArgumentException("Title не может быть null");
-        book.Author = dto.Author ?? throw new ArgumentException("Author не может быть null");
+        var category = await _context.Categories.FindAsync(dto.CategoryId);
+        if (category == null)
+            throw new ArgumentException("Вказана категорія не існує");
+
+        if (dto.SubcategoryId.HasValue)
+        {
+            var subcategory = await _context.Subcategories.FindAsync(dto.SubcategoryId.Value);
+            if (subcategory == null)
+                throw new ArgumentException("Вказана підкатегорія не існує");
+            if (subcategory.CategoryId != dto.CategoryId)
+                throw new ArgumentException("Підкатегорія не належить до вказаної категорії");
+        }
+
+        book.Title = dto.Title ?? throw new ArgumentException("Назва не може бути порожньою");
+        book.Author = dto.Author ?? throw new ArgumentException("Автор не може бути порожнім");
         book.YearPublished = dto.YearPublished;
         book.Publisher = dto.Publisher;
         book.PageCount = dto.PageCount;
-        book.Language = dto.Language ?? throw new ArgumentException("Language не может быть null");
+        book.Language = dto.Language ?? throw new ArgumentException("Мова не може бути порожньою");
         book.CoverImage = dto.CoverImage;
-        book.Description = dto.Description ?? throw new ArgumentException("Description не может быть null");
+        book.Description = dto.Description ?? throw new ArgumentException("Опис не може бути порожнім");
+        book.CategoryId = dto.CategoryId;
+        book.SubcategoryId = dto.SubcategoryId;
 
         if (dto.File != null)
         {
             book.Content = await _pdfValidationService.ValidateAndGetContentAsync(dto.File);
-        }
-
-        if (dto.GenreIds == null || !dto.GenreIds.Any())
-            throw new ArgumentException("Необходимо указать хотя бы один жанр");
-
-        book.BookGenres.Clear();
-        foreach (var genreId in dto.GenreIds)
-        {
-            book.BookGenres.Add(new BookGenre { GenreId = genreId });
         }
 
         await _context.SaveChangesAsync();
@@ -193,7 +201,7 @@ public class BookService : IBookService
     {
         var book = await _context.Books.FindAsync(id);
         if (book == null)
-            throw new KeyNotFoundException($"Книга с ID {id} не найдена");
+            throw new KeyNotFoundException($"Книга з ID {id} не знайдена");
 
         _context.Books.Remove(book);
         await _context.SaveChangesAsync();
@@ -203,20 +211,17 @@ public class BookService : IBookService
     {
         var book = await _context.Books.FindAsync(id);
         if (book == null)
-            throw new KeyNotFoundException($"Книга с ID {id} не найдена");
+            throw new KeyNotFoundException($"Книга з ID {id} не знайдена");
 
         if (book.Content == null)
-            throw new InvalidOperationException($"У книги с ID {id} отсутствует содержимое");
+            throw new InvalidOperationException($"У книги з ID {id} відсутній вміст");
 
         return book.Content;
     }
 
     public async Task<int> GetTotalCountAsync(BookFilterParameters filter)
     {
-        var query = _context.Books
-            .Include(b => b.BookGenres)
-            .ThenInclude(bg => bg.Genre)
-            .AsQueryable();
+        var query = _context.Books.AsQueryable();
 
         // Фільтрація
         if (!string.IsNullOrWhiteSpace(filter.Search))
@@ -227,9 +232,14 @@ public class BookService : IBookService
                 b.Author.ToLower().Contains(searchLower));
         }
 
-        if (filter.GenreId.HasValue)
+        if (filter.CategoryId.HasValue)
         {
-            query = query.Where(b => b.BookGenres.Any(bg => bg.GenreId == filter.GenreId.Value));
+            query = query.Where(b => b.CategoryId == filter.CategoryId.Value);
+        }
+
+        if (filter.SubcategoryId.HasValue)
+        {
+            query = query.Where(b => b.SubcategoryId == filter.SubcategoryId.Value);
         }
 
         if (filter.YearFrom.HasValue)

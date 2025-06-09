@@ -10,27 +10,29 @@ namespace chtfkbibliotek.Server.Models
         }
 
         public DbSet<Book> Books { get; set; }
-        public DbSet<Genre> Genres { get; set; }
-        public DbSet<BookGenre> BookGenres { get; set; }
+        public DbSet<Category> Categories { get; set; }
+        public DbSet<Subcategory> Subcategories { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             // Видаляємо наявне налаштування для Enum
             // modelBuilder.HasPostgresEnum<LanguageType>("language_type");  // Видалити
 
-            // Налаштування зв'язків для BookGenre
-            modelBuilder.Entity<BookGenre>()
-                .HasKey(bg => new { bg.BookId, bg.GenreId });
+            // Налаштування зв'язків для Book
+            modelBuilder.Entity<Book>()
+                .HasOne(b => b.Category)
+                .WithMany(c => c.Books)
+                .HasForeignKey(b => b.CategoryId);
 
-            modelBuilder.Entity<BookGenre>()
-                .HasOne(bg => bg.Book)
-                .WithMany(b => b.BookGenres)
-                .HasForeignKey(bg => bg.BookId);
-
-            modelBuilder.Entity<BookGenre>()
-                .HasOne(bg => bg.Genre)
+            modelBuilder.Entity<Book>()
+                .HasOne(b => b.Subcategory)
                 .WithMany()
-                .HasForeignKey(bg => bg.GenreId);
+                .HasForeignKey(b => b.SubcategoryId);
+
+            modelBuilder.Entity<Subcategory>()
+                .HasOne(s => s.Category)
+                .WithMany(c => c.Subcategories)
+                .HasForeignKey(s => s.CategoryId);
 
             // Можна додати налаштування для поля Language, якщо потрібна валідація (якщо це потрібно)
             modelBuilder.Entity<Book>()

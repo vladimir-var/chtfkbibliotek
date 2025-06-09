@@ -3,7 +3,8 @@ namespace chtfkbibliotek.Server.DTO
     public class BookFilterParameters
     {
         public string? Search { get; set; }
-        public int? GenreId { get; set; }
+        public int? CategoryId { get; set; }
+        public int? SubcategoryId { get; set; }
         public int? YearFrom { get; set; }
         public int? YearTo { get; set; }
         public int? MinPageCount { get; set; }
