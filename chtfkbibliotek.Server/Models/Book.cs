@@ -28,11 +28,6 @@ namespace chtfkbibliotek.Server.Models
 
         public byte[]? Content { get; set; }
 
-        [Required]
-        public int CategoryId { get; set; }
-        public Category Category { get; set; } = default!;
-
-        public int? SubcategoryId { get; set; }
-        public Subcategory? Subcategory { get; set; }
+        public ICollection<BookGenre> BookGenres { get; set; } = new List<BookGenre>();
     }
 }

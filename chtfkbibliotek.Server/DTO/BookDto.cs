@@ -11,7 +11,6 @@
         public string Language { get; set; } = default!;
         public string? CoverImage { get; set; }
         public string Description { get; set; } = default!;
-        public string CategoryName { get; set; } = default!;
-        public string? SubcategoryName { get; set; }
+        public List<string> GenreNames { get; set; } = new();
     }
 }
