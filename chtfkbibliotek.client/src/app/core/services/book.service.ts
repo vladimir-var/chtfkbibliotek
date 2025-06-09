@@ -32,7 +32,7 @@ export interface BookFilters {
 
 @Injectable({ providedIn: 'root' })
 export class BookService {
-  private apiUrl = 'https://localhost:57078/api';
+  private apiUrl = 'https://localhost:7278/api';
 
   // Стан фільтрів з можливістю підписки
   private filtersSubject = new BehaviorSubject<BookFilters>({
