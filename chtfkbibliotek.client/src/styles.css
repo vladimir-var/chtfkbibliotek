@@ -1,24 +1,27 @@
 /* Global styles */
 :root {
-  /* Primary color palette from user requirements */
-  --primary-dark: #6c5f5b;  /* темний коричнево-сірий */
-  --primary: #4f4a45;       /* темний сіро-коричневий (був secondary) */
-  --primary-light: #dac3b3;  /* світлий бежево-рожевий */
-  --secondary: #cdab81;      /* середній золотисто-коричневий (був primary) */
+  /* Основні кольори */
+  --primary: #115b7a;      /* основний синій */
+  --primary-dark: #0d4a63; /* темніша версія primary */
+  --primary-light: #1a7a9e; /* світліша версія primary */
   
-  /* Extended color palette based on the main colors */
-  --secondary-dark: #b59762; /* темніша версія secondary */
-  --secondary-light: #dec08d; /* світліша версія secondary */
-  
-  /* Text colors */
-  --text-dark: #2c2925;
-  --text-light: #6b6561;
-  --light-text: #f1ece7;
+  --secondary: #d1a919;    /* золотистий */
+  --secondary-dark: #a68514; /* темніша версія secondary */
+  --secondary-light: #e6c13d; /* світліша версія secondary */
+
+  /* Додаткові кольори */
+  --accent-dark: #32384d;  /* темно-синій */
+  --accent-darker: #211f30; /* ще темніший синій */
+
+  /* Текстові кольори */
+  --text-dark: #211f30;
+  --text-light: #32384d;
+  --light-text: #ffffff;
   --text-muted: #a3a3a3;
-  
-  /* Background colors */
-  --background-light: #f8f5f2;
-  --background-dark: #e5e0dc;
+
+  /* Фонові кольори */
+  --background-light: #f8f9fa;
+  --background-dark: #e9ecef;
   
   /* Border radius */
   --border-radius-sm: 0.25rem;
@@ -136,7 +139,7 @@ a:hover {
 }
 
 .form-control:focus {
-  box-shadow: 0 0 0 0.2rem rgba(205, 171, 129, 0.25);
+  box-shadow: 0 0 0 0.2rem rgba(var(--secondary-rgb), 0.25);
   border-color: var(--secondary);
   background-color: white;
 }

@@ -17,21 +17,8 @@
         <h1 class="book-title">{{ book.title }}</h1>
         <h2 class="book-author">{{ book.author }}</h2>
         
-        <div class="book-genres mb-4">
-          <span class="genre-badge" *ngFor="let genre of book.genreNames">
-            {{ genre }}
-          </span>
-
-        </div>
-        
         <div class="book-meta-info">
           <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-            <div class="col">
-              <div class="info-item">
-                <div class="info-label">Рік видання</div>
-                <div class="info-value">{{ book.yearPublished }}</div>
-              </div>
-            </div>
             
             <div class="col">
               <div class="info-item">
@@ -40,12 +27,6 @@
               </div>
             </div>
             
-            <div class="col">
-              <div class="info-item">
-                <div class="info-label">Мова</div>
-                <div class="info-value">{{ book.language }}</div>
-              </div>
-            </div>
             
             <div class="col">
               <div class="info-item">

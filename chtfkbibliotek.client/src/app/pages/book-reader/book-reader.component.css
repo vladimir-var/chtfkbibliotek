@@ -3,13 +3,17 @@
   flex-direction: column;
   min-height: 100vh;
   height: 100%;
-  background-color: #f8f9fa;
+  background-color: var(--bg-light);
   overflow: hidden;
 }
 
 .book-header {
-  background-color: #fff;
-  padding: 1rem 0;
+  background-color: var(--primary);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   z-index: 10;
 }
@@ -49,9 +53,12 @@
   max-width: 800px;
   margin: 0 auto;
   padding: 2rem;
-  background-color: #fff;
+  background-color: white;
   border-radius: 8px;
   box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+  color: var(--text-dark);
+  line-height: 1.6;
+  font-size: 1.1rem;
 }
 
 .content-text {
@@ -136,4 +143,115 @@
   .reader-content {
     padding: 1.5rem;
   }
+}
+
+.reader-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background-color: var(--bg-light);
+}
+
+.reader-header {
+  background-color: var(--primary);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.reader-title {
+  font-size: 1.2rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.reader-controls {
+  display: flex;
+  gap: 1rem;
+}
+
+.reader-button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.reader-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.reader-footer {
+  background-color: var(--primary);
+  color: white;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reader-progress {
+  font-size: 0.9rem;
+}
+
+.reader-settings {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+}
+
+.reader-settings-button {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.reader-settings-button:hover {
+  background-color: var(--primary-dark);
+}
+
+.reader-settings-panel {
+  position: absolute;
+  bottom: 100%;
+  right: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.settings-group {
+  margin-bottom: 1rem;
+}
+
+.settings-label {
+  color: var(--primary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.settings-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid var(--primary-light);
+  border-radius: 4px;
+  color: var(--primary);
+}
+
+.settings-input:focus {
+  outline: none;
+  border-color: var(--secondary);
+  box-shadow: 0 0 0 2px rgba(209, 169, 25, 0.2);
 }

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { BookService, BookServiceError } from './book.service';
-import { Book } from '../models/book.model';
+import { Book, NewBook } from '../models/book.model';
 
 describe('BookService', () => {
   let service: BookService;
@@ -36,7 +36,7 @@ describe('BookService', () => {
         pageCount: 100,
         language: 'Ukrainian',
         coverImage: 'test.jpg',
-        genreNames: ['Test Genre']
+        categoryId: 1
       };
 
       service.getBookById(1).subscribe(book => {
@@ -65,26 +65,28 @@ describe('BookService', () => {
   describe('getFilteredBooks', () => {
     it('should apply filters correctly', () => {
       const filters = {
-        genres: [1, 2],
-        yearFrom: 2020,
-        yearTo: 2023,
-        search: 'test'
+        categoryId: 1,
+        subcategoryId: 101,
+        search: 'test',
+        page: 1,
+        pageSize: 10
       };
 
       service.getFilteredBooks(filters).subscribe();
 
       const req = httpMock.expectOne(req => req.url === `${service['apiUrl']}/books`);
       expect(req.request.method).toBe('GET');
-      expect(req.request.params.get('genreId')).toBe('1,2');
-      expect(req.request.params.get('yearFrom')).toBe('2020');
-      expect(req.request.params.get('yearTo')).toBe('2023');
+      expect(req.request.params.get('categoryId')).toBe('1');
+      expect(req.request.params.get('subcategoryId')).toBe('101');
       expect(req.request.params.get('search')).toBe('test');
+      expect(req.request.params.get('page')).toBe('1');
+      expect(req.request.params.get('pageSize')).toBe('10');
     });
   });
 
   describe('addBook', () => {
     it('should handle validation errors', () => {
-      const invalidBook = {
+      const invalidBook: NewBook = {
         title: '',
         author: '',
         description: '',
@@ -93,7 +95,8 @@ describe('BookService', () => {
         coverImage: '',
         content: null,
         publisher: '',
-        pageCount: 0
+        pageCount: 0,
+        categoryId: 1
       };
 
       service.addBook(invalidBook).subscribe({

@@ -1,10 +1,7 @@
-import { Genre } from './genre.model';
-
 export interface Book {
   id: number;
   title: string;
   author: string;
-  genreNames: string[];
   yearPublished: number;
   publisher: string;
   pageCount: number;
@@ -12,10 +9,11 @@ export interface Book {
   coverImage: string;
   description: string;
   content?: string;
+  categoryId: number;
+  subcategoryId?: number;
 }
 
-export interface NewBook extends Omit<Book, 'id' | 'content' | 'genreNames'> {
+export interface NewBook extends Omit<Book, 'id' | 'content'> {
   content?: File | null;
-  genres?: Genre[];
 }
 

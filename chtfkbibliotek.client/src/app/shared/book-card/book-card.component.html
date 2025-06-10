@@ -7,20 +7,12 @@
     <h3 class="card-title">{{ book.title }}</h3>
     <p class="card-subtitle">{{ book.author }}</p>
 
-    <!-- Genres badges -->
-    <div class="book-genres">
-      <span class="genre-badge" *ngFor="let genre of book.genreNames.slice(0, 3)">
-        {{ genre }}
-      </span>
-    </div>
-
-
     <!-- Book meta info -->
     <div class="book-meta">
       <div class="book-year">
         <i class="fas fa-calendar-alt"></i> {{ book.yearPublished }}
       </div>
-      <button class="btn-view-details" (click)="viewBookDetails()">
+      <button class="btn-view-details" (click)="navigateToBookDetails()">
         Детальніше <i class="fas fa-arrow-right"></i>
       </button>
     </div>

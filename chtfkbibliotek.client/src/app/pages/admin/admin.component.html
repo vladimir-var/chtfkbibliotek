@@ -46,26 +46,6 @@
                 </div>
                 
                 <div class="col-md-6">
-                  <label for="yearPublished" class="form-label">Рік видання</label>
-                  <input 
-                    type="number" 
-                    class="form-control" 
-                    id="yearPublished" 
-                    name="yearPublished"
-                    [(ngModel)]="newBook.yearPublished">
-                </div>
-                
-                <div class="col-md-6">
-                  <label for="language" class="form-label">Мова</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    id="language" 
-                    name="language"
-                    [(ngModel)]="newBook.language">
-                </div>
-                
-                <div class="col-md-6">
                   <label for="publisher" class="form-label">Видавництво</label>
                   <input 
                     type="text" 
@@ -83,6 +63,62 @@
                     id="pageCount" 
                     name="pageCount"
                     [(ngModel)]="newBook.pageCount">
+                </div>
+                
+                <div class="col-12">
+                  <label for="category" class="form-label">Категорія*</label>
+                  <select 
+                    class="form-select" 
+                    id="category" 
+                    name="category"
+                    [(ngModel)]="selectedCategoryId"
+                    (change)="onCategoryChange()"
+                    required>
+                    <option [ngValue]="null" disabled>Виберіть категорію</option>
+                    <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+                  </select>
+                </div>
+
+                <div class="col-12" *ngIf="selectedCategoryId">
+                  <label for="subcategory" class="form-label">Підкатегорія</label>
+                  <select 
+                    class="form-select" 
+                    id="subcategory" 
+                    name="subcategory"
+                    [(ngModel)]="selectedSubcategoryId"
+                    (change)="onSubcategoryChange()">
+                    <option [ngValue]="null">Без підкатегорії</option>
+                    <option *ngFor="let subcategory of subcategories" [ngValue]="subcategory.id">{{ subcategory.name }}</option>
+                  </select>
+                </div>
+
+                <div class="col-12 mt-3">
+                  <h5>Створити нову підкатегорію</h5>
+                  <div class="row g-2">
+                    <div class="col-12">
+                      <label for="newSubcategoryName" class="form-label">Назва підкатегорії</label>
+                      <input 
+                        type="text" 
+                        class="form-control" 
+                        id="newSubcategoryName" 
+                        name="newSubcategoryName"
+                        [(ngModel)]="newSubcategoryName">
+                    </div>
+                    <div class="col-12">
+                      <label for="newSubcategoryDescription" class="form-label">Опис підкатегорії (опціонально)</label>
+                      <input 
+                        type="text" 
+                        class="form-control" 
+                        id="newSubcategoryDescription" 
+                        name="newSubcategoryDescription"
+                        [(ngModel)]="newSubcategoryDescription">
+                    </div>
+                    <div class="col-12">
+                      <button type="button" class="btn btn-secondary w-100" (click)="createSubcategory()">
+                        <i class="fas fa-plus-square me-2"></i>Створити підкатегорію
+                      </button>
+                    </div>
+                  </div>
                 </div>
                 
                 <div class="col-12">
@@ -130,25 +166,6 @@
                 </div>
                 
                 <div class="col-12">
-                  <label class="form-label">Жанри*</label>
-                  <div class="genres-container border rounded p-3">
-                    <div class="row g-2">
-                      <div class="col-6" *ngFor="let genre of genres">
-                        <div class="form-check">
-                          <input 
-                            type="checkbox" 
-                            class="form-check-input" 
-                            [id]="'genre' + genre.id" 
-                            [checked]="selectedGenres.includes(genre.id)"
-                            (change)="onGenreChange(genre.id, $event)">
-                          <label class="form-check-label" [for]="'genre' + genre.id">{{ genre.name }}</label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div class="col-12">
                   <button type="submit" class="btn btn-primary w-100">
                     <i class="fas fa-plus-circle me-2"></i>Додати книгу
                   </button>
@@ -166,6 +183,32 @@
             <h2 class="h5 mb-0">Управління книгами</h2>
           </div>
           <div class="card-body p-0">
+            <div class="row p-3">
+              <div class="col-md-6 mb-3">
+                <label for="filterCategory" class="form-label">Категорія</label>
+                <select 
+                  class="form-select" 
+                  id="filterCategory" 
+                  name="filterCategory"
+                  [(ngModel)]="selectedFilterCategoryId"
+                  (change)="onFilterCategoryChange()">
+                  <option [ngValue]="null">Всі категорії</option>
+                  <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="filterSubcategory" class="form-label">Підкатегорія</label>
+                <select 
+                  class="form-select" 
+                  id="filterSubcategory" 
+                  name="filterSubcategory"
+                  [(ngModel)]="selectedFilterSubcategoryId"
+                  (change)="onFilterSubcategoryChange()">
+                  <option [ngValue]="null">Всі підкатегорії</option>
+                  <option *ngFor="let subcategory of filteredSubcategories" [ngValue]="subcategory.id">{{ subcategory.name }}</option>
+                </select>
+              </div>
+            </div>
             <div class="table-responsive">
               <table class="table table-hover mb-0">
                 <thead class="table-light">
@@ -173,8 +216,7 @@
                     <th scope="col">#</th>
                     <th scope="col">Назва</th>
                     <th scope="col">Автор</th>
-                    <th scope="col">Жанри</th>
-                    <th scope="col">Рік</th>
+                    
                     <th scope="col">Дії</th>
                   </tr>
                 </thead>
@@ -183,12 +225,7 @@
                     <td>{{ i + 1 }}</td>
                     <td>{{ book.title }}</td>
                     <td>{{ book.author }}</td>
-                    <td>
-                      <span class="badge bg-secondary me-1" *ngFor="let genre of book.genreNames">
-                        {{ genre }}
-                      </span>
-                    </td>
-                    <td>{{ book.yearPublished }}</td>
+                    
                     <td>
                       <div class="btn-group btn-group-sm">
                         <a [routerLink]="['/book', book.id]" class="btn btn-info">
@@ -201,7 +238,7 @@
                     </td>
                   </tr>
                   <tr *ngIf="books.length === 0">
-                    <td colspan="6" class="text-center py-3">Немає книг у базі даних</td>
+                    <td colspan="4" class="text-center py-3">Немає книг у базі даних</td>
                   </tr>
                 </tbody>
               </table>

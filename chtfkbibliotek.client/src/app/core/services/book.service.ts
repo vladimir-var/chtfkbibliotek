@@ -1,10 +1,10 @@
 import { HttpClient, HttpParams, HttpHeaders, HttpErrorResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { Book, NewBook } from '../models/book.model';
-import { Genre } from '../models/genre.model';
 import { catchError, map } from 'rxjs/operators';
 import { throwError } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export class BookServiceError extends Error {
   constructor(
@@ -13,35 +13,35 @@ export class BookServiceError extends Error {
     public type: 'NotFound' | 'ValidationError' | 'ServerError' = 'ServerError'
   ) {
     super(message);
-    this.name = 'BookServiceError';
+    Object.setPrototypeOf(this, BookServiceError.prototype);
   }
 
   override get message(): string {
-    return super.message;
+    return `BookServiceError: ${this.type} - ${super.message}`;
   }
 }
 
 export interface BookFilters {
-  genres: number[];
-  yearFrom: number | null;
-  yearTo: number | null;
-  search?: string;
+  authorSearch?: string;
+  titleSearch?: string;
   page: number;
   pageSize: number;
+  categoryId: number | null;
+  subcategoryId: number | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class BookService {
-  private apiUrl = 'https://localhost:57078/api';
+  private apiUrl = environment.apiUrl;
 
-  // Стан фільтрів з можливістю підписки
-  private filtersSubject = new BehaviorSubject<BookFilters>({
-    genres: [],
-    yearFrom: null,
-    yearTo: null,
-    search: '',
+  // Зроблено публічним для доступу з інших компонентів
+  public filtersSubject = new BehaviorSubject<BookFilters>({
+    authorSearch: '',
+    titleSearch: '',
     page: 1,
-    pageSize: 10
+    pageSize: 10,
+    categoryId: null,
+    subcategoryId: null
   });
   filters$ = this.filtersSubject.asObservable();
 
@@ -72,11 +72,6 @@ export class BookService {
     );
   }
 
-  // Отримати всі жанри
-  getAllGenres(): Observable<Genre[]> {
-    return this.http.get<Genre[]>(`${this.apiUrl}/genre`);
-  }
-
   // Додати нову книгу
   addBook(book: NewBook): Observable<Book> {
     const url = `${this.apiUrl}/books`;
@@ -90,14 +85,9 @@ export class BookService {
     if (book.yearPublished) formData.append('yearPublished', book.yearPublished.toString());
     if (book.publisher) formData.append('publisher', book.publisher);
     if (book.pageCount) formData.append('pageCount', book.pageCount.toString());
-    if (book.coverImage) formData.append('coverImage', book.coverImage);
-
-    // Добавляем жанры как отдельные поля
-    if (book.genres && book.genres.length > 0) {
-      book.genres.forEach((genre: Genre) => {
-        formData.append('genreIds', genre.id.toString());
-      });
-    }
+    formData.append('coverImage', book.coverImage || '');
+    if (book.categoryId) formData.append('categoryId', book.categoryId.toString());
+    if (book.subcategoryId) formData.append('subcategoryId', book.subcategoryId.toString());
 
     // Добавляем файл, если он есть
     if (book.content) {
@@ -135,22 +125,29 @@ export class BookService {
    * Цей метод використовується як для пошуку, так і для фільтрації.
    */
   getFilteredBooks(filters: BookFilters): Observable<Book[]> {
+    // Якщо підкатегорія не вибрана І немає активного пошуку за автором або назвою,
+    // повертаємо порожній список книг.
+    if (filters.subcategoryId === null && !filters.authorSearch && !filters.titleSearch) {
+      this.paginationSubject.next({ totalItems: 0, totalPages: 0 }); // Оновлюємо пагінацію на 0
+      return of([]); // Повертаємо Observable з порожнім масивом
+    }
+
     let params = new HttpParams();
 
-    if (filters.genres?.length) {
-      filters.genres.forEach(genreId => {
-        params = params.append('genreId', genreId.toString());
-      });
+    if (filters.authorSearch) {
+      params = params.set('authorSearch', filters.authorSearch);
     }
-    if (filters.yearFrom !== null) {
-      params = params.set('yearFrom', filters.yearFrom.toString());
+    if (filters.titleSearch) {
+      params = params.set('titleSearch', filters.titleSearch);
     }
-    if (filters.yearTo !== null) {
-      params = params.set('yearTo', filters.yearTo.toString());
+    if (filters.categoryId !== null) {
+      params = params.set('categoryId', filters.categoryId.toString());
     }
-    if (filters.search) {
-      params = params.set('search', filters.search);
+    // subcategoryId є не-null завдяки перевірці вище
+    if (filters.subcategoryId !== null) {
+      params = params.set('subcategoryId', filters.subcategoryId.toString());
     }
+
     params = params.set('page', filters.page.toString());
     params = params.set('pageSize', filters.pageSize.toString());
 
@@ -211,12 +208,12 @@ export class BookService {
   resetFilters(): void {
     console.log('Сброс фильтров');
     const defaultFilters: BookFilters = {
-      genres: [],
-      yearFrom: null,
-      yearTo: null,
-      search: '',
+      authorSearch: '',
+      titleSearch: '',
       page: 1,
-      pageSize: 10
+      pageSize: 10,
+      categoryId: null,
+      subcategoryId: null
     };
 
     console.log('Применение фильтров по умолчанию:', defaultFilters);
@@ -243,6 +240,29 @@ export class BookService {
           ));
         }
         return throwError(() => new BookServiceError('Помилка при отриманні вмісту книги', error.status));
+      })
+    );
+  }
+
+  // Завантажити вміст книги (текстовий файл) за її ID
+  uploadBookContent(bookId: number, file: File): Observable<void> {
+    const url = `${this.apiUrl}/books/${bookId}/content`;
+    const formData = new FormData();
+    formData.append('file', file);
+
+    return this.http.put<void>(url, formData).pipe(
+      catchError((error: HttpErrorResponse) => {
+        if (error.status === 404) {
+          return throwError(() => new BookServiceError('Книга не знайдена', 404, 'NotFound'));
+        }
+        if (error.status === 400) {
+          return throwError(() => new BookServiceError(
+            error.error || 'Помилка валідації вмісту книги',
+            400,
+            'ValidationError'
+          ));
+        }
+        return throwError(() => new BookServiceError('Помилка при завантаженні вмісту книги', error.status));
       })
     );
   }

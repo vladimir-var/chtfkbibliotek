@@ -4,40 +4,29 @@
       <h5 class="mb-0">Фільтри</h5>
     </div>
     <div class="card-body">
-      <form [formGroup]="filterForm">
-        <!-- Genres Filter -->
-        <div class="filter-section">
-          <h6 class="filter-title">Предмети</h6>
-          <div class="genres-list">
-            <div class="form-check" *ngFor="let genre of genres">
-              <input class="form-check-input" type="checkbox" 
-                     [id]="'genre-' + genre.id" 
-                     [checked]="isGenreSelected(genre.id)"
-                     (change)="onGenreChange(genre.id)">
-              <label class="form-check-label" [for]="'genre-' + genre.id">
-                {{ genre.name }}
-              </label>
-            </div>
-          </div>
+ 
+        <!-- Фільтр за категоріями -->
+        <div class="filter-group mt-4">
+          <label for="categoryFilter" class="form-label">Категорія:</label>
+          <select id="categoryFilter"
+                  class="form-select"
+                  [(ngModel)]="selectedCategoryId"
+                  (change)="onCategoryChange()">
+            <option [ngValue]="null">Всі категорії</option>
+            <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+          </select>
         </div>
 
-        <!-- Year Published Filter -->
-        <div class="filter-section">
-          <h6 class="filter-title">Рік видання</h6>
-          <div class="row g-2">
-            <div class="col-6">
-              <select class="form-select form-select-sm" formControlName="yearFrom">
-                <option [ngValue]="null">Від</option>
-                <option *ngFor="let year of years" [value]="year">{{ year }}</option>
-              </select>
-            </div>
-            <div class="col-6">
-              <select class="form-select form-select-sm" formControlName="yearTo">
-                <option [ngValue]="null">До</option>
-                <option *ngFor="let year of years" [value]="year">{{ year }}</option>
-              </select>
-            </div>
-          </div>
+        <!-- Фільтр за підкатегоріями (показується, якщо вибрана категорія) -->
+        <div class="filter-group mt-3" *ngIf="selectedCategoryId">
+          <label for="subcategoryFilter" class="form-label">Підкатегорія:</label>
+          <select id="subcategoryFilter"
+                  class="form-select"
+                  [(ngModel)]="selectedSubcategoryId"
+                  (change)="onSubcategoryChange()">
+            <option [ngValue]="null">Всі підкатегорії</option>
+            <option *ngFor="let subcategory of subcategories" [ngValue]="subcategory.id">{{ subcategory.name }}</option>
+          </select>
         </div>
 
         <!-- Filter Buttons -->
@@ -49,7 +38,7 @@
             <i class="fas fa-undo-alt"></i> Скинути
           </button>
         </div>
-      </form>
+      <!-- </form> -->
     </div>
   </div>
 </div>

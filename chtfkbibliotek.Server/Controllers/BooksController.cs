@@ -1,8 +1,8 @@
-﻿using chtfkbibliotek.Server.DTO;
-using chtfkbibliotek.Server.Constants;
-using Microsoft.AspNetCore.Mvc;
+﻿using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Collections.Generic;
+using chtfkbibliotek.Server.DTO;
+using chtfkbibliotek.Server.Services;
+using Microsoft.AspNetCore.Mvc;
 
 namespace chtfkbibliotek.Server.Controllers
 {
@@ -18,116 +18,69 @@ namespace chtfkbibliotek.Server.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BookDto>>> GetBooks(
-            [FromQuery] string? search,
-            [FromQuery] int? genreId,
-            [FromQuery] int? yearFrom,
-            [FromQuery] int? yearTo,
-            [FromQuery] int? minPageCount,
-            [FromQuery] int? maxPageCount,
+        public async Task<ActionResult<IEnumerable<BookDTO>>> GetFiltered(
+            [FromQuery] string? authorSearch = null,
+            [FromQuery] string? titleSearch = null,
+            [FromQuery] int? categoryId = null,
+            [FromQuery] int? subcategoryId = null,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 10)
         {
-            var filter = new BookFilterParameters
-            {
-                Search = search,
-                GenreId = genreId,
-                YearFrom = yearFrom,
-                YearTo = yearTo,
-                MinPageCount = minPageCount,
-                MaxPageCount = maxPageCount,
-                Page = page,
-                PageSize = pageSize
-            };
+            var (books, totalCount) = await _bookService.GetFilteredAsync(
+                authorSearch, titleSearch, categoryId, subcategoryId, page, pageSize);
 
-            var books = await _bookService.GetBooksAsync(filter);
-            var totalCount = await _bookService.GetTotalCountAsync(filter);
-            
             Response.Headers.Add("X-Total-Count", totalCount.ToString());
+            Response.Headers.Add("Access-Control-Expose-Headers", "X-Total-Count"); // Додано для CORS
+
             return Ok(books);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<BookDto>> GetBook(int id)
-        {
-            try
+        public async Task<ActionResult<BookDTO>> GetById(int id)
             {
-                var book = await _bookService.GetBookAsync(id);
-                return Ok(book);
-            }
-            catch (KeyNotFoundException)
-            {
+            var book = await _bookService.GetByIdAsync(id);
+            if (book == null)
                 return NotFound();
-            }
+
+            return Ok(book);
         }
 
         [HttpPost]
-        public async Task<IActionResult> CreateBook([FromForm] BookCreateDto dto)
-        {
-            try
+        public async Task<ActionResult<BookDTO>> Create([FromForm] BookCreateDTO bookDto)
             {
-                var book = await _bookService.CreateBookAsync(dto);
-                return CreatedAtAction(nameof(GetBook), new { id = book.Id }, book);
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            var book = await _bookService.CreateAsync(bookDto);
+            return CreatedAtAction(nameof(GetById), new { id = book.Id }, book);
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateBook(int id, [FromForm] BookCreateDto dto)
+        public async Task<ActionResult<BookDTO>> Update(int id, BookUpdateDTO bookDto)
         {
-            try
-            {
-                await _bookService.UpdateBookAsync(id, dto);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
+            var book = await _bookService.UpdateAsync(id, bookDto);
+            if (book == null)
                 return NotFound();
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+
+            return Ok(book);
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteBook(int id)
+        public async Task<ActionResult> Delete(int id)
         {
-            try
-            {
-                await _bookService.DeleteBookAsync(id);
-                return NoContent();
-            }
-            catch (KeyNotFoundException)
-            {
+            var result = await _bookService.DeleteAsync(id);
+            if (!result)
                 return NotFound();
-            }
+
+            return NoContent();
         }
 
         [HttpGet("{id}/content")]
-        public async Task<IActionResult> GetBookContent(int id)
+        public async Task<ActionResult> GetBookContent(int id)
         {
-            try
-            {
-                var content = await _bookService.GetBookContentAsync(id);
-                
-                Response.Headers.Add("Cache-Control", "no-cache, no-store, must-revalidate");
-                Response.Headers.Add("Pragma", "no-cache");
-                Response.Headers.Add("Expires", "0");
-                
-                return File(content, BookConstants.PdfContentType, $"{id}.pdf");
-            }
-            catch (KeyNotFoundException)
+            var content = await _bookService.GetBookContentAsync(id);
+            if (content == null)
             {
                 return NotFound();
             }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            return File(content, "application/pdf");
         }
     }
 }

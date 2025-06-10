@@ -1,128 +1,164 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
-import { Genre } from '../../core/models/genre.model';
+import { FormsModule } from '@angular/forms';
 import { BookService } from '../../core/services/book.service';
+import { CategoryService } from '../../core/services/category.service';
+import { Category, Subcategory } from '../../core/models/category.model';
+import { Subject, takeUntil } from 'rxjs';
 
 @Component({
   selector: 'app-sidebar-filter',
   templateUrl: './sidebar-filter.component.html',
   styleUrls: ['./sidebar-filter.component.css'],
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule]
+  imports: [CommonModule, FormsModule]
 })
-export class SidebarFilterComponent implements OnInit {
-  genres: Genre[] = []; // Список жанрів для чекбоксів
-  years: number[] = []; // Список років для селектів
-  selectedGenres: number[] = []; // Локально вибрані жанри
-  filterForm: FormGroup; // Реактивна форма для років
+export class SidebarFilterComponent implements OnInit, OnDestroy {
 
-  // Поточні фільтри з BookService
-  private currentFilters: {
-    genres: number[],
-    yearFrom: number | null,
-    yearTo: number | null,
-    search?: string
-  } = {
-      genres: [],
-      yearFrom: null,
-      yearTo: null
-    };
+  // Дані для фільтрації за категоріями/підкатегоріями
+  categories: Category[] = [];
+  subcategories: Subcategory[] = [];
+  selectedCategoryId: number | null = null;
+  selectedSubcategoryId: number | null = null;
+
+  private destroy$ = new Subject<void>(); // For unsubscribing observables
 
   constructor(
     private bookService: BookService,
-    private fb: FormBuilder
-  ) {
-    // Ініціалізація форми
-    this.filterForm = this.fb.group({
-      yearFrom: [null],
-      yearTo: [null]
-    });
-
-    // Створюємо список років від поточного до 1900
-    const currentYear = new Date().getFullYear();
-    for (let year = currentYear; year >= 1900; year--) {
-      this.years.push(year);
-    }
-  }
+    private categoryService: CategoryService
+  ) { }
 
   ngOnInit(): void {
-    // Завантаження жанрів
-    this.bookService.getAllGenres().subscribe(genres => {
-      this.genres = genres;
-    });
+    // Підписуємося на зміни фільтрів з BookService, щоб синхронізувати стан UI
+    this.bookService.filters$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(filters => {
+        let shouldLoadSubcategories = false;
+        // Оновлюємо локальний стан тільки якщо він відрізняється
+        if (this.selectedCategoryId !== filters.categoryId) {
+          this.selectedCategoryId = filters.categoryId;
+          shouldLoadSubcategories = true;
+        }
+        if (this.selectedSubcategoryId !== filters.subcategoryId) {
+          this.selectedSubcategoryId = filters.subcategoryId;
+        }
 
-    // Підписка на глобальні фільтри (щоб оновити локальні дані у формі)
-    this.bookService.filters$.subscribe(filters => {
-      this.currentFilters = filters;
-      this.selectedGenres = [...filters.genres];
+        // Завантажуємо підкатегорії, якщо категорія змінилася і вибрана
+        // або якщо категорія вже вибрана і ми просто ініціалізуємо компонент
+        if (shouldLoadSubcategories && this.selectedCategoryId) {
+          this.loadSubcategories(this.selectedCategoryId, filters.subcategoryId); // Pass subcategoryId to pre-select
+        } else if (this.selectedCategoryId && this.subcategories.length === 0) {
+          // Case where component initialized with existing category but subcategories not loaded yet
+          this.loadSubcategories(this.selectedCategoryId, filters.subcategoryId);
+        } else if (!this.selectedCategoryId) {
+          // If category is null, clear subcategories
+          this.subcategories = [];
+        }
+      });
 
-      // Оновлюємо значення форми без запуску подій
-      this.filterForm.patchValue({
-        yearFrom: filters.yearFrom,
-        yearTo: filters.yearTo
-      }, { emitEvent: false });
+    // Завантажуємо категорії
+    this.loadCategories();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  // Завантаження всіх категорій
+  loadCategories(): void {
+    this.categoryService.getAllCategories().subscribe({
+      next: (categories) => {
+        this.categories = categories;
+        // The subscription to filters$ in ngOnInit should handle loading subcategories.
+        // No need to explicitly load subcategories here unless this is the ONLY way categoryId gets set initially.
+        // But since filters$ is a BehaviorSubject, it will immediately emit the current value.
+        // So, the ngOnInit subscription will correctly handle initial loading.
+      },
+      error: (error) => {
+        console.error('Помилка при завантаженні категорій:', error);
+      }
     });
   }
 
-  /**
-   * Обробка кліку по чекбоксу жанру — додає або видаляє жанр з масиву selectedGenres
-   * Ця функція не викликає фільтрацію одразу
-   */
-  onGenreChange(genreId: number): void {
-    const index = this.selectedGenres.indexOf(genreId);
-    if (index === -1) {
-      this.selectedGenres.push(genreId);
+  // Завантаження підкатегорій для вибраної категорії
+  loadSubcategories(categoryId: number, preselectedSubcategoryId: number | null = null): void {
+    this.categoryService.getSubcategoriesByCategory(categoryId).subscribe({
+      next: (subcategories) => {
+        this.subcategories = subcategories;
+        // Скидаємо вибір підкатегорії, якщо вона не відповідає новим підкатегоріям
+        // або якщо preselectedSubcategoryId є null (при зміні категорії, наприклад)
+        if (preselectedSubcategoryId === null || !this.subcategories.some(sub => sub.id === preselectedSubcategoryId)) {
+          this.selectedSubcategoryId = null;
+        } else {
+          this.selectedSubcategoryId = preselectedSubcategoryId;
+        }
+      },
+      error: (error) => {
+        console.error('Помилка при завантаженні підкатегорій:', error);
+      }
+    });
+  }
+
+  // Обробка зміни вибраної категорії
+  onCategoryChange(): void {
+    // Скидаємо підкатегорію при зміні категорії
+    this.selectedSubcategoryId = null;
+
+    if (this.selectedCategoryId) {
+      this.loadSubcategories(this.selectedCategoryId);
     } else {
-      this.selectedGenres.splice(index, 1);
+      this.subcategories = []; // Очищаємо підкатегорії, якщо категорія не вибрана
     }
+    this.updateBookServiceFilters(); // Оновлюємо фільтри в BookService
+  }
+
+  // Обробка зміни вибраної підкатегорії
+  onSubcategoryChange(): void {
+    this.updateBookServiceFilters(); // Оновлюємо фільтри в BookService
   }
 
   /**
-   * Перевірка, чи жанр вибраний — для відображення стану чекбоксу
+   * Оновлює фільтри в BookService на основі поточного стану SidebarFilterComponent
    */
-  isGenreSelected(genreId: number): boolean {
-    return this.selectedGenres.includes(genreId);
+  updateBookServiceFilters(): void {
+    const currentFilters = this.bookService.filtersSubject.getValue(); // Отримуємо поточні фільтри
+    const updatedFilters = {
+      ...currentFilters, // Зберігаємо інші фільтри (наприклад, search term)
+      categoryId: this.selectedCategoryId,
+      subcategoryId: this.selectedSubcategoryId
+    };
+    this.bookService.updateFilters(updatedFilters); // Оновлюємо фільтри через BookService
   }
 
   /**
    * Викликається при натисканні на кнопку "Застосувати"
-   * Оновлює глобальні фільтри в BookService, які тригерять запит
+   * Наразі просто емітує подію, оскільки логіка фільтрації знаходиться у батьківському компоненті
    */
   applyFilters(): void {
-    const yearFrom = this.filterForm.get('yearFrom')?.value ? Number(this.filterForm.get('yearFrom')?.value) : null;
-    const yearTo = this.filterForm.get('yearTo')?.value ? Number(this.filterForm.get('yearTo')?.value) : null;
-
-    this.bookService.updateFilters({
-      genres: this.selectedGenres,
-      yearFrom: yearFrom,
-      yearTo: yearTo,
-      page: 1,
-      pageSize: 10
-    });
+    this.updateBookServiceFilters(); // Оновлюємо фільтри в BookService
   }
 
   /**
    * Викликається при натисканні на кнопку "Скинути"
-   * Очищає локальні дані та оновлює фільтри на дефолтні
+   * Очищає локальні дані фільтрів та емітує подію
    */
   resetFilters(): void {
-    this.selectedGenres = [];
-    this.filterForm.patchValue({
-      yearFrom: null,
-      yearTo: null
-    });
-    this.bookService.resetFilters();
+    this.selectedCategoryId = null; // Скидаємо вибрану категорію
+    this.selectedSubcategoryId = null; // Скидаємо вибрану підкатегорію
+    this.subcategories = []; // Очищаємо список підкатегорій
+    this.bookService.resetFilters(); // BookService.resetFilters() скидає всі фільтри
+    // The BookSearchComponent will react to bookService.resetFilters() via its filters$ subscription
   }
 
   /**
    * Перевіряє, чи є активні фільтри (використовується для відображення кнопки "Скинути")
    */
   hasActiveFilters(): boolean {
+    const currentFilters = this.bookService.filtersSubject.getValue();
     return (
-      this.currentFilters.genres.length > 0 ||
-      this.currentFilters.yearFrom !== null ||
-      this.currentFilters.yearTo !== null
+      currentFilters.categoryId !== null ||
+      currentFilters.subcategoryId !== null
     );
   }
 }

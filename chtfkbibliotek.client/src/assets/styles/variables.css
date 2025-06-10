@@ -1,28 +1,32 @@
 :root {
-  /* Primary Colors from the specification */
-  --primary: #6c5f5b;
-  --primary-dark: #4f4a45;
-  --primary-light: #dac3b3;
-  --secondary: #cdab81;
-  --secondary-dark: #b99969;
-  --secondary-light: #e5d4bf;
+  /* Основні кольори */
+  --primary: #115b7a;
+  --primary-dark: #0d4a63;
+  --primary-light: #1a7a9e;
+  --secondary: #d1a919;
+  --secondary-dark: #a68514;
+  --secondary-light: #e6c13d;
 
-  /* RGB values for transparency use */
-  --primary-rgb: 108, 95, 91;
-  --primary-dark-rgb: 79, 74, 69;
-  --primary-light-rgb: 218, 195, 179;
-  --secondary-rgb: 205, 171, 129;
-  --secondary-dark-rgb: 185, 153, 105;
-  --secondary-light-rgb: 229, 212, 191;
+  /* Додаткові кольори */
+  --accent-dark: #32384d;
+  --accent-darker: #211f30;
 
-  /* Text colors */
-  --primary-text: #333333;
-  --secondary-text: #666666;
+  /* Текстові кольори */
+  --primary-text: #211f30;
+  --secondary-text: #32384d;
   --light-text: #ffffff;
 
-  /* Background colors */
+  /* Фонові кольори */
   --bg-light: #f8f9fa;
-  --bg-dark: #343a40;
+  --bg-dark: #e9ecef;
+
+  /* RGB values for transparency use */
+  --primary-rgb: 17, 91, 122;
+  --primary-dark-rgb: 13, 74, 99;
+  --primary-light-rgb: 26, 122, 158;
+  --secondary-rgb: 209, 169, 25;
+  --secondary-dark-rgb: 166, 133, 20;
+  --secondary-light-rgb: 230, 193, 61;
 
   /* Spacing */
   --spacing-xs: 0.25rem;

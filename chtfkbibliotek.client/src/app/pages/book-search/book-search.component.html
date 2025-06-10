@@ -3,7 +3,7 @@
   <div class="search-header">
     <div class="container">
       <h1 class="search-title">Каталог бібліотеки</h1>
-      <p class="search-description">Знайдіть потрібну книгу за назвою, автором або жанром</p>
+      <p class="search-description">Знайдіть потрібну книгу за назвою, автором або ключове слово...</p>
 
       <!-- Search input -->
       <div class="search-input-group">
@@ -25,12 +25,43 @@
     <div class="container">
       <div class="row">
         <!-- Sidebar filters -->
-        <div class="col-lg-3">
-          <app-sidebar-filter></app-sidebar-filter>
+        <div class="col-lg-4">
+          <app-sidebar-filter (filtersChanged)="applyFilters()"></app-sidebar-filter>
+
+          <!-- Фільтр за категоріями -->
+          <!-- <div class="filter-group mt-4">
+            <label for="categoryFilter" class="form-label">Категорія:</label>
+            <select id="categoryFilter"
+                    class="form-select"
+                    [(ngModel)]="selectedCategoryId"
+                    (change)="onCategoryChange()">
+              <option [ngValue]="null">Всі категорії</option>
+              <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+            </select>
+          </div> -->
+
+          <!-- Фільтр за підкатегоріями (показується, якщо вибрана категорія) -->
+          <!-- <div class="filter-group mt-3" *ngIf="selectedCategoryId">
+            <label for="subcategoryFilter" class="form-label">Підкатегорія:</label>
+            <select id="subcategoryFilter"
+                    class="form-select"
+                    [(ngModel)]="selectedSubcategoryId"
+                    (change)="onSubcategoryChange()">
+              <option [ngValue]="null">Всі підкатегорії</option>
+              <option *ngFor="let subcategory of subcategories" [ngValue]="subcategory.id">{{ subcategory.name }}</option>
+            </select>
+          </div> -->
+
+          <!-- Кнопка скидання фільтрів -->
+          <!-- <div class="mt-4">
+            <button class="btn btn-secondary w-100" (click)="resetFilters()" *ngIf="hasActiveFilters()">
+              Скинути фільтри
+            </button>
+          </div> -->
         </div>
 
         <!-- Book results -->
-        <div class="col-lg-9">
+        <div class="col-lg-8">
           <!-- Results counter -->
           <div class="found-counter" *ngIf="books !== undefined">
             Знайдено <span>{{ books?.length || 0 }}</span> книг

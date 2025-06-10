@@ -1,44 +1,45 @@
-﻿using chtfkbibliotek.Server.Models;
+﻿using chtfkbibliotek.Server.Data;
 using chtfkbibliotek.Server.Services;
 using Microsoft.EntityFrameworkCore;
+using Npgsql.EntityFrameworkCore.PostgreSQL.Infrastructure;
+using EFCore.NamingConventions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавление CORS
+// Add services to the container.
+builder.Services.AddControllers();
+
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// Додаємо CORS
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowAll", policy =>
+    options.AddPolicy("AllowAll",
+        builder =>
     {
-        // Разрешаем все источники, методы и заголовки
-        policy.AllowAnyOrigin()
+            builder.AllowAnyOrigin()
               .AllowAnyMethod()
               .AllowAnyHeader();
     });
 });
 
-// Добавление сервисов для работы с базой данных и контроллеров
-builder.Services.AddScoped<IBookService, BookService>();
-builder.Services.AddScoped<GenreService>();
-builder.Services.AddScoped<IPdfValidationService, PdfValidationService>();
-
-builder.Services.AddDbContext<AppDbContext>(options =>
+// Додаємо контекст бази даних
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
+    options.UseLowerCaseNamingConvention();
 });
 
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+// Додаємо сервіси
+builder.Services.AddScoped<ICategoryService, CategoryService>();
+builder.Services.AddScoped<ISubcategoryService, SubcategoryService>();
+builder.Services.AddScoped<IBookService, BookService>();
 
 var app = builder.Build();
 
-// Применение CORS
-app.UseCors("AllowAll");
-
-app.UseDefaultFiles();
-app.UseStaticFiles();
-
-// Конфигурация пайплайна обработки HTTP-запросов
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -47,10 +48,10 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseCors("AllowAll");
+
 app.UseAuthorization();
 
 app.MapControllers();
-
-app.MapFallbackToFile("/index.html");
 
 app.Run();

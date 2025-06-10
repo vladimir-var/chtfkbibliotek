@@ -4,9 +4,9 @@ import { RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BookService } from '../../core/services/book.service';
 import { Book } from '../../core/models/book.model';
-import { Genre } from '../../core/models/genre.model';
 import { BookCardComponent } from '../../shared/book-card/book-card.component';
 import { SidebarFilterComponent } from '../../shared/sidebar-filter/sidebar-filter.component';
+import { BookFilters } from '../../core/services/book.service';
 
 @Component({
   selector: 'app-book-search',
@@ -17,10 +17,6 @@ import { SidebarFilterComponent } from '../../shared/sidebar-filter/sidebar-filt
 })
 export class BookSearchComponent implements OnInit {
   books: Book[] = [];             // Список книг
-  genres: Genre[] = [];           // Список жанрів
-  selectedGenres: number[] = [];  // Обрані жанри
-  yearFrom: number | null = null; // Рік "від"
-  yearTo: number | null = null;   // Рік "до"
   searchTerm = '';                // Пошуковий запит
   isLoading = false;              // Індикатор завантаження
   isMobileFiltersShown = true;    // Показ фільтрів на мобільному
@@ -37,19 +33,7 @@ export class BookSearchComponent implements OnInit {
     this.isLoading = true;
     console.log('Инициализация BookSearchComponent');
 
-    // Загружаем жанры
-    this.bookService.getAllGenres().subscribe({
-      next: (genres) => {
-        console.log('Загружены жанры:', genres);
-        this.genres = genres;
-      },
-      error: (error) => {
-        console.error('Ошибка при загрузке жанров:', error);
-        this.genres = [];
-      }
-    });
-
-    // Подписываемся на отфильтрованные книги
+    // Підписуємося на відфільтровані книги
     this.bookService.filteredBooks$.subscribe({
       next: (books) => {
         console.log('Получены книги:', books);
@@ -63,7 +47,7 @@ export class BookSearchComponent implements OnInit {
       }
     });
 
-    // Подписываемся на изменения пагинации
+    // Підписуємося на зміни пагінації
     this.bookService.pagination$.subscribe({
       next: (pagination) => {
         console.log('Получена пагинация:', pagination);
@@ -73,70 +57,51 @@ export class BookSearchComponent implements OnInit {
       error: (error) => console.error('Ошибка при загрузке пагинации:', error)
     });
 
-    // Загружаем все книги без фильтров
-    console.log('Вызов resetFilters');
-    this.bookService.resetFilters();
-  }
-
-  /**
-   * Перемкнути вибір жанру (не викликає фільтрацію автоматично)
-   */
-  toggleGenre(genreId: number): void {
-    const index = this.selectedGenres.indexOf(genreId);
-    if (index >= 0) {
-      this.selectedGenres.splice(index, 1);
-    } else {
-      this.selectedGenres.push(genreId);
-    }
-    // applyFilters() не викликається тут
-  }
-
-  /**
-   * Видалити жанр з вибраних (не застосовує фільтри автоматично)
-   */
-  removeGenreFilter(name: string): void {
-    const genre = this.genres.find(g => g.name === name);
-    if (!genre) return;
-    this.selectedGenres = this.selectedGenres.filter(id => id !== genre.id);
-    // applyFilters() не викликається тут
-  }
-
-  /**
-   * Отримати список назв обраних жанрів (для візуалізації)
-   */
-  getSelectedGenreNames(): string[] {
-    return this.selectedGenres
-      .map(id => this.genres.find(g => g.id === id)?.name || '')
-      .filter(name => !!name);
+    
   }
 
   /**
    * Застосувати фільтри (єдиний момент, коли відбувається запит до сервера)
+   * Цей метод тепер отримує актуальні фільтри через BookService.filters$
    */
   applyFilters(): void {
     this.isLoading = true;
     this.currentPage = 1; // Скидаємо на першу сторінку при новому пошуку
-    this.bookService.updateFilters({
-      genres: this.selectedGenres,
-      yearFrom: this.yearFrom,
-      yearTo: this.yearTo,
-      search: this.searchTerm,
+
+    // Отримуємо поточні фільтри з BookService, які SidebarFilterComponent оновлює
+    const currentFilters = this.bookService.filtersSubject.getValue();
+
+    let updatedFilters: BookFilters = {
+      ...currentFilters,
+      authorSearch: undefined,
+      titleSearch: undefined,
       page: this.currentPage,
       pageSize: this.pageSize
-    });
+    };
+
+    if (this.searchTerm.trim() !== '') {
+      if (this.searchTerm.toLowerCase().startsWith('автор:')) {
+        updatedFilters.authorSearch = this.searchTerm.substring('автор:'.length).trim();
+        updatedFilters.titleSearch = undefined;
+      } else {
+        updatedFilters.titleSearch = this.searchTerm.trim();
+        updatedFilters.authorSearch = this.searchTerm.trim();
+      }
+    }
+
+    this.bookService.updateFilters(updatedFilters);
   }
 
   /**
    * Скинути всі фільтри (жанри, роки, пошук)
    */
   resetFilters(): void {
-    this.selectedGenres = [];
-    this.yearFrom = null;
-    this.yearTo = null;
     this.searchTerm = '';
     this.currentPage = 1;
     this.isLoading = true;
-    this.bookService.resetFilters();
+    this.bookService.resetFilters(); // BookService.resetFilters() скидає всі фільтри, включаючи ті, що в SidebarFilterComponent
+    this.books = []; // Очищаємо список книг при скиданні фільтрів
+    this.isLoading = false;
   }
 
   /**
@@ -155,12 +120,15 @@ export class BookSearchComponent implements OnInit {
 
   /**
    * Перевірка: чи активні фільтри (для кнопки "Скинути")
+   * Тепер перевіряємо через BookService.filters$ або через searchTerm
    */
   hasActiveFilters(): boolean {
-    return this.selectedGenres.length > 0
-      || this.yearFrom !== null
-      || this.yearTo !== null
-      || this.searchTerm.trim() !== '';
+    const currentFilters = this.bookService.filtersSubject.getValue();
+    return (
+      this.searchTerm.trim() !== '' ||
+      currentFilters.categoryId !== null ||
+      currentFilters.subcategoryId !== null
+    );
   }
 
   /**
@@ -171,11 +139,11 @@ export class BookSearchComponent implements OnInit {
     
     this.currentPage = page;
     this.isLoading = true;
+
+    const currentFilters = this.bookService.filtersSubject.getValue();
+
     this.bookService.updateFilters({
-      genres: this.selectedGenres,
-      yearFrom: this.yearFrom,
-      yearTo: this.yearTo,
-      search: this.searchTerm,
+      ...currentFilters,
       page: this.currentPage,
       pageSize: this.pageSize
     });

@@ -48,7 +48,7 @@
 
 .search-input:focus {
   outline: none;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 5px 20px rgba(var(--accent-darker-rgb), 0.15);
   border-color: var(--secondary);
 }
 
@@ -180,7 +180,7 @@
   background-color: var(--primary);
   border-radius: var(--border-radius-md);
   margin-top: 2rem;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 10px 20px rgba(var(--accent-darker-rgb), 0.15);
 }
 
 .empty-state-icon {
@@ -218,7 +218,7 @@
   background-color: var(--secondary-dark);
   border-color: var(--secondary-dark);
   transform: translateY(-3px);
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 5px 10px rgba(var(--accent-darker-rgb), 0.2);
 }
 
 /* Loading state */
@@ -240,12 +240,12 @@
   margin-bottom: 1.5rem;
   background-color: var(--primary);
   color: var(--primary-light);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(var(--light-text-rgb), 0.1);
   padding: 0.75rem 1rem;
   text-align: left;
   border-radius: var(--border-radius-md);
   font-weight: 500;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 15px rgba(var(--accent-darker-rgb), 0.1);
 }
 
 .filter-trigger-btn i {

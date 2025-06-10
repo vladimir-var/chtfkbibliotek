@@ -1,8 +1,148 @@
 .book-details-container {
-  background-color: var(--primary-dark);
+  padding: 2rem;
+  background-color: var(--bg-light);
   min-height: 100vh;
-  padding-bottom: 3rem;
+}
+
+.book-details-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.book-details-header {
+  background-color: var(--primary);
+  color: white;
+  padding: 1.5rem;
+}
+
+.book-details-title {
+  font-size: 1.8rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.book-details-author {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.book-details-content {
+  padding: 2rem;
+}
+
+.book-details-section {
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  color: var(--primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--secondary);
+}
+
+.book-description {
   color: var(--light-text);
+  line-height: 1.6;
+  font-size: 1.1rem;
+}
+
+.book-meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.meta-label {
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.meta-value {
+  color: var(--light-text);
+  font-weight: 500;
+}
+
+.book-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.action-button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.action-button.primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.action-button.primary:hover {
+  background-color: var(--primary-dark);
+}
+
+.action-button.secondary {
+  background-color: var(--secondary);
+  color: white;
+}
+
+.action-button.secondary:hover {
+  background-color: var(--secondary-dark);
+}
+
+.action-button:disabled {
+  background-color: var(--bg-dark);
+  cursor: not-allowed;
+}
+
+.book-rating {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.rating-value {
+  color: var(--primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.rating-stars {
+  color: var(--secondary);
+}
+
+.book-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.tag {
+  background-color: var(--secondary-light);
+  color: var(--primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 16px;
+  font-size: 0.9rem;
 }
 
 .back-link {
@@ -30,17 +170,20 @@
 
 /* Book cover styles */
 .book-cover-container {
-  border-radius: var(--border-radius-md);
+  border-radius: 0;
   overflow: hidden;
   box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
   background-color: var(--primary);
   border: 3px solid var(--secondary);
   position: relative;
+  width: 100%;
+  height: 400px;
 }
 
 .book-cover {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
   transition: transform 0.5s;
 }
@@ -103,7 +246,7 @@
 
 .info-label {
   font-size: 0.8rem;
-  color: var(--primary-light);
+  color: var(--secondary);
   margin-bottom: 0.25rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -138,12 +281,13 @@
 
 .book-description {
   line-height: 1.8;
-  color: var(--primary-light);
+  color: var(--light-text);
   background-color: var(--primary);
   padding: 1.5rem;
   border-radius: var(--border-radius-md);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
   border-right: 5px solid var(--secondary);
+  word-wrap: break-word;
 }
 
 .book-description p {
@@ -197,17 +341,18 @@
 }
 
 .read-btn {
-  background-color: #6c5f5b;
+  background-color: var(--secondary);
   color: white;
   padding: 10px 20px;
   font-weight: 500;
   border: none;
   border-radius: 4px;
-  transition: all 0.3s ease;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .read-btn:hover {
-  background-color: #cdab81;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: var(--secondary-dark);
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }

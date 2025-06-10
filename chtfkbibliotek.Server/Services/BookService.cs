@@ -1,257 +1,209 @@
-﻿using chtfkbibliotek.Server.DTO;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using chtfkbibliotek.Server.Data;
+using chtfkbibliotek.Server.DTO;
 using chtfkbibliotek.Server.Models;
 using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.IO;
-using chtfkbibliotek.Server.Services;
 
-public class BookService : IBookService
+namespace chtfkbibliotek.Server.Services
 {
-    private readonly AppDbContext _context;
-    private readonly IPdfValidationService _pdfValidationService;
-
-    public BookService(AppDbContext context, IPdfValidationService pdfValidationService)
+    public class BookService : IBookService
     {
-        _context = context;
-        _pdfValidationService = pdfValidationService;
-    }
+        private readonly ApplicationDbContext _context;
 
-    public async Task<IEnumerable<BookDto>> GetBooksAsync(BookFilterParameters filter)
-    {
-        var query = _context.Books
-            .Include(b => b.BookGenres)
-            .ThenInclude(bg => bg.Genre)
-            .AsQueryable();
-
-        // Фільтрація
-        if (!string.IsNullOrWhiteSpace(filter.Search))
+        public BookService(ApplicationDbContext context)
         {
-            var searchLower = filter.Search.ToLower();
-            query = query.Where(b =>
-                b.Title.ToLower().Contains(searchLower) ||
-                b.Author.ToLower().Contains(searchLower));
+            _context = context;
         }
 
-        if (filter.GenreId.HasValue)
+        public async Task<IEnumerable<BookDTO>> GetAllAsync()
         {
-            query = query.Where(b => b.BookGenres.Any(bg => bg.GenreId == filter.GenreId.Value));
+            var (books, totalCount) = await GetFilteredAsync(null, null, null, null, 1, 10);
+            return books;
         }
 
-        if (filter.YearFrom.HasValue)
+        public async Task<BookDTO?> GetByIdAsync(int id)
         {
-            query = query.Where(b => b.YearPublished >= filter.YearFrom.Value);
-        }
+            var book = await _context.Books.FindAsync(id);
+            if (book == null) return null;
 
-        if (filter.YearTo.HasValue)
-        {
-            query = query.Where(b => b.YearPublished <= filter.YearTo.Value);
-        }
-
-        if (filter.MinPageCount.HasValue)
-        {
-            query = query.Where(b => b.PageCount >= filter.MinPageCount.Value);
-        }
-
-        if (filter.MaxPageCount.HasValue)
-        {
-            query = query.Where(b => b.PageCount <= filter.MaxPageCount.Value);
-        }
-
-        // Пагінація
-        var books = await query
-            .OrderByDescending(b => b.Id)
-            .Skip((filter.Page - 1) * filter.PageSize)
-            .Take(filter.PageSize)
-            .Select(b => new BookDto
+            return new BookDTO
             {
-                Id = b.Id,
-                Title = b.Title,
-                Author = b.Author,
-                YearPublished = b.YearPublished,
-                Publisher = b.Publisher,
-                PageCount = b.PageCount,
-                Language = b.Language,
-                CoverImage = b.CoverImage,
-                Description = b.Description,
-                GenreNames = b.BookGenres.Select(bg => bg.Genre.Name).ToList()
-            })
-            .ToListAsync();
-
-        return books;
-    }
-
-    public async Task<BookDto> GetBookAsync(int id)
-    {
-        var book = await _context.Books
-            .Include(b => b.BookGenres)
-            .ThenInclude(bg => bg.Genre)
-            .FirstOrDefaultAsync(b => b.Id == id);
-
-        if (book == null)
-            throw new KeyNotFoundException($"Книга с ID {id} не найдена");
-
-        return new BookDto
-        {
-            Id = book.Id,
-            Title = book.Title,
-            Author = book.Author,
-            YearPublished = book.YearPublished,
-            Publisher = book.Publisher,
-            PageCount = book.PageCount,
-            Language = book.Language,
-            CoverImage = book.CoverImage,
-            Description = book.Description,
-            GenreNames = book.BookGenres.Select(bg => bg.Genre.Name).ToList()
-        };
-    }
-
-    public async Task<BookDto> CreateBookAsync(BookCreateDto dto)
-    {
-        if (dto == null)
-            throw new ArgumentNullException(nameof(dto));
-
-        var book = new Book
-        {
-            Title = dto.Title ?? throw new ArgumentException("Title не может быть null"),
-            Author = dto.Author ?? throw new ArgumentException("Author не может быть null"),
-            YearPublished = dto.YearPublished,
-            Publisher = dto.Publisher,
-            PageCount = dto.PageCount,
-            Language = dto.Language ?? throw new ArgumentException("Language не может быть null"),
-            CoverImage = dto.CoverImage,
-            Description = dto.Description ?? throw new ArgumentException("Description не может быть null")
-        };
-
-        if (dto.File != null)
-        {
-            book.Content = await _pdfValidationService.ValidateAndGetContentAsync(dto.File);
+                Id = book.Id,
+                Title = book.Title,
+                Author = book.Author,
+                Description = book.Description,
+                Publisher = book.Publisher,
+                PageCount = book.PageCount,
+                CategoryId = book.CategoryId,
+                SubcategoryId = book.SubcategoryId,
+                CoverImage = book.CoverImageUrl,
+                FileUrl = book.FileUrl
+            };
         }
 
-        if (dto.GenreIds == null || !dto.GenreIds.Any())
-            throw new ArgumentException("Необходимо указать хотя бы один жанр");
-
-        var genres = await _context.Genres
-            .Where(g => dto.GenreIds.Contains(g.Id))
-            .ToListAsync();
-
-        if (genres.Count != dto.GenreIds.Count)
-            throw new ArgumentException("Один или несколько указанных жанров не найдены в базе данных");
-
-        foreach (var genre in genres)
+        public async Task<BookDTO> CreateAsync(BookCreateDTO bookDto)
         {
-            book.BookGenres.Add(new BookGenre
+            byte[]? fileContent = null;
+            if (bookDto.File != null)
             {
-                GenreId = genre.Id,
-                Genre = genre
-            });
+                using (var memoryStream = new MemoryStream())
+                {
+                    await bookDto.File.CopyToAsync(memoryStream);
+                    fileContent = memoryStream.ToArray();
+                }
+            }
+
+            var book = new Book
+            {
+                Title = bookDto.Title,
+                Author = bookDto.Author,
+                Description = bookDto.Description,
+                Publisher = bookDto.Publisher,
+                PageCount = bookDto.PageCount,
+                CategoryId = bookDto.CategoryId,
+                SubcategoryId = bookDto.SubcategoryId,
+                Content = fileContent,
+                CoverImageUrl = !string.IsNullOrWhiteSpace(bookDto.CoverImage) 
+                                ? bookDto.CoverImage 
+                                : "/images/covers/default_cover.jpg"
+            };
+
+            _context.Books.Add(book);
+            await _context.SaveChangesAsync();
+
+            if (bookDto.File != null)
+            {
+                book.FileUrl = $"/uploads/books/{book.Id}.pdf";
+                await _context.SaveChangesAsync();
+            }
+
+            return new BookDTO
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Author = book.Author,
+                Description = book.Description,
+                Publisher = book.Publisher,
+                PageCount = book.PageCount,
+                CategoryId = book.CategoryId,
+                SubcategoryId = book.SubcategoryId,
+                CoverImage = book.CoverImageUrl,
+                FileUrl = book.FileUrl
+            };
         }
 
-        _context.Books.Add(book);
-        await _context.SaveChangesAsync();
-
-        return await GetBookAsync(book.Id);
-    }
-
-    public async Task UpdateBookAsync(int id, BookCreateDto dto)
-    {
-        var book = await _context.Books
-            .Include(b => b.BookGenres)
-            .FirstOrDefaultAsync(b => b.Id == id);
-
-        if (book == null)
-            throw new KeyNotFoundException($"Книга с ID {id} не найдена");
-
-        book.Title = dto.Title ?? throw new ArgumentException("Title не может быть null");
-        book.Author = dto.Author ?? throw new ArgumentException("Author не может быть null");
-        book.YearPublished = dto.YearPublished;
-        book.Publisher = dto.Publisher;
-        book.PageCount = dto.PageCount;
-        book.Language = dto.Language ?? throw new ArgumentException("Language не может быть null");
-        book.CoverImage = dto.CoverImage;
-        book.Description = dto.Description ?? throw new ArgumentException("Description не может быть null");
-
-        if (dto.File != null)
+        public async Task<BookDTO?> UpdateAsync(int id, BookUpdateDTO bookDto)
         {
-            book.Content = await _pdfValidationService.ValidateAndGetContentAsync(dto.File);
+            var book = await _context.Books.FindAsync(id);
+            if (book == null) return null;
+
+            book.Title = bookDto.Title;
+            book.Author = bookDto.Author;
+            book.Description = bookDto.Description;
+            book.Publisher = bookDto.Publisher;
+            book.PageCount = bookDto.PageCount;
+            book.CategoryId = bookDto.CategoryId;
+            book.SubcategoryId = bookDto.SubcategoryId;
+            book.CoverImageUrl = bookDto.CoverImageUrl;
+            book.FileUrl = bookDto.FileUrl;
+
+            await _context.SaveChangesAsync();
+
+            return new BookDTO
+            {
+                Id = book.Id,
+                Title = book.Title,
+                Author = book.Author,
+                Description = book.Description,
+                Publisher = book.Publisher,
+                PageCount = book.PageCount,
+                CategoryId = book.CategoryId,
+                SubcategoryId = book.SubcategoryId,
+                CoverImage = book.CoverImageUrl,
+                FileUrl = book.FileUrl
+            };
         }
 
-        if (dto.GenreIds == null || !dto.GenreIds.Any())
-            throw new ArgumentException("Необходимо указать хотя бы один жанр");
-
-        book.BookGenres.Clear();
-        foreach (var genreId in dto.GenreIds)
+        public async Task<bool> DeleteAsync(int id)
         {
-            book.BookGenres.Add(new BookGenre { GenreId = genreId });
+            var book = await _context.Books.FindAsync(id);
+            if (book == null) return false;
+
+            _context.Books.Remove(book);
+            await _context.SaveChangesAsync();
+            return true;
         }
 
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task DeleteBookAsync(int id)
-    {
-        var book = await _context.Books.FindAsync(id);
-        if (book == null)
-            throw new KeyNotFoundException($"Книга с ID {id} не найдена");
-
-        _context.Books.Remove(book);
-        await _context.SaveChangesAsync();
-    }
-
-    public async Task<byte[]> GetBookContentAsync(int id)
-    {
-        var book = await _context.Books.FindAsync(id);
-        if (book == null)
-            throw new KeyNotFoundException($"Книга с ID {id} не найдена");
-
-        if (book.Content == null)
-            throw new InvalidOperationException($"У книги с ID {id} отсутствует содержимое");
-
-        return book.Content;
-    }
-
-    public async Task<int> GetTotalCountAsync(BookFilterParameters filter)
-    {
-        var query = _context.Books
-            .Include(b => b.BookGenres)
-            .ThenInclude(bg => bg.Genre)
-            .AsQueryable();
-
-        // Фільтрація
-        if (!string.IsNullOrWhiteSpace(filter.Search))
+        public async Task<byte[]?> GetBookContentAsync(int id)
         {
-            var searchLower = filter.Search.ToLower();
-            query = query.Where(b =>
-                b.Title.ToLower().Contains(searchLower) ||
-                b.Author.ToLower().Contains(searchLower));
+            var bookContent = await _context.Books
+                                    .Where(b => b.Id == id)
+                                    .Select(b => b.Content)
+                                    .FirstOrDefaultAsync();
+            return bookContent;
         }
 
-        if (filter.GenreId.HasValue)
+        public async Task<(IEnumerable<BookDTO> Books, int TotalCount)> GetFilteredAsync(
+            string? authorSearch = null,
+            string? titleSearch = null,
+            int? categoryId = null,
+            int? subcategoryId = null,
+            int page = 1,
+            int pageSize = 10)
         {
-            query = query.Where(b => b.BookGenres.Any(bg => bg.GenreId == filter.GenreId.Value));
-        }
+            var query = _context.Books.AsQueryable();
 
-        if (filter.YearFrom.HasValue)
-        {
-            query = query.Where(b => b.YearPublished >= filter.YearFrom.Value);
-        }
+            var authorSearchLower = authorSearch?.ToLower().Trim();
+            var titleSearchLower = titleSearch?.ToLower().Trim();
 
-        if (filter.YearTo.HasValue)
-        {
-            query = query.Where(b => b.YearPublished <= filter.YearTo.Value);
-        }
+            if (!string.IsNullOrWhiteSpace(authorSearchLower) && !string.IsNullOrWhiteSpace(titleSearchLower))
+            {
+                query = query.Where(b => b.Author.ToLower().Contains(authorSearchLower) ||
+                                           b.Title.ToLower().Contains(titleSearchLower));
+            }
+            else if (!string.IsNullOrWhiteSpace(authorSearchLower))
+            {
+                query = query.Where(b => b.Author.ToLower().Contains(authorSearchLower));
+            }
+            else if (!string.IsNullOrWhiteSpace(titleSearchLower))
+            {
+                query = query.Where(b => b.Title.ToLower().Contains(titleSearchLower));
+            }
 
-        if (filter.MinPageCount.HasValue)
-        {
-            query = query.Where(b => b.PageCount >= filter.MinPageCount.Value);
-        }
+            if (categoryId.HasValue)
+            {
+                query = query.Where(b => b.CategoryId == categoryId.Value);
+            }
 
-        if (filter.MaxPageCount.HasValue)
-        {
-            query = query.Where(b => b.PageCount <= filter.MaxPageCount.Value);
-        }
+            if (subcategoryId.HasValue)
+            {
+                query = query.Where(b => b.SubcategoryId == subcategoryId.Value);
+            }
 
-        return await query.CountAsync();
+            var totalCount = await query.CountAsync();
+
+            var books = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(b => new BookDTO
+                {
+                    Id = b.Id,
+                    Title = b.Title,
+                    Author = b.Author,
+                    Description = b.Description,
+                    Publisher = b.Publisher,
+                    PageCount = b.PageCount,
+                    CategoryId = b.CategoryId,
+                    SubcategoryId = b.SubcategoryId,
+                    CoverImage = b.CoverImageUrl,
+                    FileUrl = b.FileUrl
+                })
+                .ToListAsync();
+
+            return (books, totalCount);
+        }
     }
 }

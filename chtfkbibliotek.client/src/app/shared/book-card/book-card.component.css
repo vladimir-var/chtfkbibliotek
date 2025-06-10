@@ -1,20 +1,106 @@
 .book-card {
-  background-color: #ffffff;
-  border-radius: 10px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
   overflow: hidden;
-  position: relative;
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
   height: 100%;
   display: flex;
   flex-direction: column;
-  border: none;
-  aspect-ratio: 1 / 1.2; /* Роблю картки більш квадратними */
 }
 
 .book-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.book-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-bottom: 2px solid var(--secondary);
+}
+
+.book-content {
+  padding: 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.book-title {
+  color: var(--primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  line-height: 1.4;
+}
+
+.book-author {
+  color: var(--primary);
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+.book-description {
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  flex-grow: 1;
+}
+
+.book-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--background-dark);
+}
+
+.book-year {
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.book-rating {
+  background-color: var(--secondary-light);
+  color: var(--primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.book-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.book-button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: background-color 0.2s;
+}
+
+.book-button.primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.book-button.primary:hover {
+  background-color: var(--primary-dark);
+}
+
+.book-button.secondary {
+  background-color: var(--secondary);
+  color: white;
+}
+
+.book-button.secondary:hover {
+  background-color: var(--secondary-dark);
 }
 
 .book-card::before {
@@ -24,7 +110,7 @@
   left: 0;
   width: 5px;
   height: 100%;
-  background-color: #cdab81;
+  background-color: var(--secondary);
   opacity: 0.7;
   transition: opacity 0.3s;
 }
@@ -62,7 +148,7 @@
   font-weight: 700;
   margin-bottom: 0.5rem;
   line-height: 1.3;
-  color: #4f4a45;
+  color: var(--primary);
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -72,12 +158,12 @@
 }
 
 .book-card:hover .card-title {
-  color: #6c5f5b;
+  color: var(--primary-dark);
 }
 
 .card-subtitle {
   font-size: 0.9rem;
-  color: #6c5f5b;
+  color: var(--primary-dark);
   margin-bottom: 0.8rem;
   font-weight: 500;
 }
@@ -93,46 +179,23 @@
 .genre-badge {
   font-size: 0.75rem;
   padding: 0.2rem 0.5rem;
-  background-color: #f0e6da;
-  color: #6c5f5b;
+  background-color: var(--secondary-light);
+  color: var(--primary);
   border-radius: 20px;
   white-space: nowrap;
   transition: background-color 0.3s, color 0.3s;
 }
 
 .book-card:hover .genre-badge {
-  background-color: #dac3b3;
-  color: #4f4a45;
-}
-
-/* Book meta info */
-.book-meta {
-  margin-top: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding-top: 0.8rem;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-}
-
-.book-year {
-  font-size: 0.85rem;
-  color: #6c5f5b;
-  display: flex;
-  align-items: center;
-}
-
-.book-year i {
-  margin-right: 0.35rem;
-  font-size: 0.9rem;
-  color: #cdab81;
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
 }
 
 /* View details button */
 .btn-view-details {
   font-size: 0.85rem;
-  color: #ffffff;
-  background-color: #6c5f5b;
+  color: white;
+  background-color: var(--primary);
   border: none;
   border-radius: 5px;
   padding: 0.35rem 0.75rem;
@@ -140,7 +203,7 @@
 }
 
 .btn-view-details:hover {
-  background-color: #4f4a45;
+  background-color: var(--primary-dark);
   transform: translateX(3px);
 }
 

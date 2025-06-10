@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace chtfkbibliotek.Server.Models
 {
@@ -7,27 +8,38 @@ namespace chtfkbibliotek.Server.Models
         public int Id { get; set; }
 
         [Required]
-        public string Title { get; set; } = default!;
+        [StringLength(200)]
+        public string Title { get; set; }
 
         [Required]
-        public string Author { get; set; } = default!;
+        [StringLength(200)]
+        public string Author { get; set; }
 
-        public int? YearPublished { get; set; }
+        public string? Description { get; set; }
 
+        [StringLength(200)]
         public string? Publisher { get; set; }
 
         public int? PageCount { get; set; }
 
         [Required]
-        public string Language { get; set; } = "Українська";  // Заміна LanguageType на string
+        public int CategoryId { get; set; }
 
-        public string? CoverImage { get; set; }
+        public int? SubcategoryId { get; set; }
 
-        [Required]
-        public string Description { get; set; } = default!;
+        [StringLength(500)]
+        public string? CoverImageUrl { get; set; }
+
+        [StringLength(500)]
+        public string? FileUrl { get; set; }
 
         public byte[]? Content { get; set; }
 
-        public ICollection<BookGenre> BookGenres { get; set; } = new List<BookGenre>();
+        // Навігаційні властивості
+        [ForeignKey("CategoryId")]
+        public virtual Category Category { get; set; }
+
+        [ForeignKey("SubcategoryId")]
+        public virtual Subcategory? Subcategory { get; set; }
     }
 }

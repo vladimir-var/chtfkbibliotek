@@ -3,9 +3,12 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
-import { BookService } from '../../core/services/book.service';
+import { BookService, BookFilters } from '../../core/services/book.service';
 import { Book, NewBook } from '../../core/models/book.model';
-import { Genre } from '../../core/models/genre.model';
+import { CategoryService } from '../../core/services/category.service';
+import { Category, Subcategory } from '../../core/models/category.model';
+import { environment } from '../../../environments/environment';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-admin',
@@ -16,7 +19,8 @@ import { Genre } from '../../core/models/genre.model';
 })
 export class AdminComponent implements OnInit {
   books: Book[] = [];
-  genres: Genre[] = [];
+  categories: Category[] = [];
+  subcategories: Subcategory[] = [];
 
   // Для повідомлень (успіх, помилки тощо)
   message: string = '';
@@ -32,14 +36,31 @@ export class AdminComponent implements OnInit {
     language: 'Українська',
     coverImage: '',
     description: '',
-    content: null
+    content: null,
+    categoryId: 0,
+    subcategoryId: undefined
   };
+
+  // Додано для обробки категорій та підкатегорій
+  selectedCategoryId: number | null = null;
+  selectedSubcategoryId: number | null = null;
+  newSubcategoryName: string = '';
+  newSubcategoryDescription: string = '';
+
+  // Додано для фільтрації
+  selectedFilterCategoryId: number | null = null;
+  selectedFilterSubcategoryId: number | null = null;
+  filteredSubcategories: Subcategory[] = [];
+
+  // Додано для пагінації
+  currentPage = 1;
+  pageSize = 10;
+  totalItems = 0;
+  totalPages = 0;
 
   // Для завантаження тексту книги
   bookTextContent: string = '';
   selectedBookId: number | null = null;
-
-  selectedGenres: number[] = [];
 
   // Поля для обробки файлу
   fileSelected: boolean = false;
@@ -50,32 +71,171 @@ export class AdminComponent implements OnInit {
   constructor(
     private authService: AuthService,
     private bookService: BookService,
-    private router: Router
+    private router: Router,
+    private categoryService: CategoryService
   ) { }
 
   ngOnInit(): void {
-    // Перевіряємо, чи є користувач адміністратором, якщо ні, перенаправляємо на сторінку входу
-    if (!this.authService.isAdmin()) {
-      this.router.navigate(['/login']);
-      return;
-    }
+    // Завантажуємо список категорій
+    this.loadCategories();
 
-    // Завантажуємо список книг і жанрів
-    this.loadBooks();
-    this.loadGenres();
+    // Ініціалізуємо фільтри у BookService
+    this.bookService.filtersSubject.next({
+      authorSearch: '',
+      titleSearch: '',
+      page: this.currentPage,
+      pageSize: this.pageSize,
+      categoryId: null,
+      subcategoryId: null
+    });
+
+    // Підписуємося на відфільтровані книги
+    this.bookService.filteredBooks$.subscribe({
+      next: (books) => {
+        this.books = books || [];
+      },
+      error: (error) => {
+        console.error('Помилка при завантаженні книг:', error);
+        this.message = 'Помилка при завантаженні списку книг. Будь ласка, спробуйте оновити сторінку.';
+        this.messageType = 'danger';
+      }
+    });
+
+    // Підписуємося на зміни пагінації
+    this.bookService.pagination$.subscribe({
+      next: (pagination) => {
+        this.totalItems = pagination.totalItems;
+        this.totalPages = pagination.totalPages;
+      },
+      error: (error) => console.error('Помилка при завантаженні пагінації:', error)
+    });
+
+    // Завантажуємо книги з початковими фільтрами
+    this.applyFilters();
   }
 
-  // Завантаження всіх книг з сервісу
+  // Завантаження всіх книг з сервісу (тепер використовуємо applyFilters)
   loadBooks(): void {
-    this.bookService.getAllBooks().subscribe(books => {
-      this.books = books;
+    this.applyFilters();
+  }
+
+  // Додано: Завантаження всіх категорій
+  loadCategories(): void {
+    this.categoryService.getAllCategories().subscribe({
+      next: (categories) => {
+      this.categories = categories;
+      if (this.categories.length > 0) {
+          // Встановлюємо значення за замовчуванням для фільтрації
+          this.selectedFilterCategoryId = null;
+          this.selectedFilterSubcategoryId = null;
+          this.newBook.categoryId = this.categories[0].id; // Для форми додавання книги
+          this.loadSubcategories(this.categories[0].id); // Для форми додавання книги
+        }
+      },
+      error: (error) => {
+        console.error('Помилка при завантаженні категорій:', error);
+        this.message = 'Помилка при завантаженні списку категорій. Будь ласка, спробуйте оновити сторінку.';
+        this.messageType = 'danger';
+      }
     });
   }
 
-  // Завантаження всіх жанрів з сервісу
-  loadGenres(): void {
-    this.bookService.getAllGenres().subscribe(genres => {
-      this.genres = genres;
+  // Додано: Завантаження підкатегорій для вибраної категорії
+  loadSubcategories(categoryId: number): void {
+    this.categoryService.getSubcategoriesByCategory(categoryId).subscribe(subcategories => {
+      this.subcategories = subcategories; // Для форми додавання книги
+      this.filteredSubcategories = subcategories; // Для фільтрації
+      this.selectedSubcategoryId = null; // Скидаємо вибір підкатегорії для форми
+      this.newBook.subcategoryId = undefined;
+    });
+  }
+
+  // Додано: Обробка зміни вибраної категорії для нової книги
+  onCategoryChange(): void {
+    if (this.selectedCategoryId) {
+      this.newBook.categoryId = this.selectedCategoryId;
+      this.loadSubcategories(this.selectedCategoryId);
+    } else {
+      this.subcategories = [];
+      this.newBook.categoryId = 0;
+      this.newBook.subcategoryId = undefined;
+    }
+  }
+
+  // Додано: Обробка зміни вибраної підкатегорії для нової книги
+  onSubcategoryChange(): void {
+    this.newBook.subcategoryId = this.selectedSubcategoryId !== null ? this.selectedSubcategoryId : undefined;
+  }
+
+  // Додано: Обробка зміни вибраної категорії для фільтрації
+  onFilterCategoryChange(): void {
+    this.selectedFilterSubcategoryId = null; // Скидаємо підкатегорію фільтра при зміні категорії
+    if (this.selectedFilterCategoryId) {
+      // Завантажуємо підкатегорії для фільтра
+      this.categoryService.getSubcategoriesByCategory(this.selectedFilterCategoryId).subscribe(subcategories => {
+        this.filteredSubcategories = subcategories;
+        this.applyFilters();
+      });
+    } else {
+      this.filteredSubcategories = [];
+      this.applyFilters();
+    }
+  }
+
+  // Додано: Обробка зміни вибраної підкатегорії для фільтрації
+  onFilterSubcategoryChange(): void {
+    this.applyFilters();
+  }
+
+  // Додано: Метод для застосування фільтрів до списку книг
+  applyFilters(): void {
+    const currentFilters = this.bookService.filtersSubject.getValue();
+
+    const updatedFilters: BookFilters = {
+      ...currentFilters,
+      page: this.currentPage,
+      pageSize: this.pageSize,
+      categoryId: this.selectedFilterCategoryId,
+      subcategoryId: this.selectedFilterSubcategoryId
+    };
+    
+    this.bookService.updateFilters(updatedFilters);
+  }
+
+  // Додано: Створення нової підкатегорії
+  createSubcategory(): void {
+    if (!this.selectedCategoryId) {
+      this.message = 'Будь ласка, спочатку виберіть категорію для нової підкатегорії.';
+      this.messageType = 'danger';
+      return;
+    }
+    if (!this.newSubcategoryName.trim()) {
+      this.message = 'Будь ласка, введіть назву для нової підкатегорії.';
+      this.messageType = 'danger';
+      return;
+    }
+
+    const subcategoryData = {
+      name: this.newSubcategoryName.trim(),
+      description: this.newSubcategoryDescription.trim(),
+      categoryId: this.selectedCategoryId
+    };
+
+    this.categoryService.createSubcategory(subcategoryData).subscribe({
+      next: (response) => {
+        this.message = 'Підкатегорію успішно додано!';
+        this.messageType = 'success';
+        this.newSubcategoryName = '';
+        this.newSubcategoryDescription = '';
+        this.loadSubcategories(this.selectedCategoryId!); // Перезавантажуємо підкатегорії
+        this.selectedSubcategoryId = response.id; // Автоматично обираємо нову підкатегорію
+        this.newBook.subcategoryId = response.id;
+      },
+      error: (error) => {
+        console.error('Помилка при додаванні підкатегорії:', error);
+        this.message = 'Помилка при додаванні підкатегорії. Будь ласка, спробуйте ще раз.';
+        this.messageType = 'danger';
+      }
     });
   }
 
@@ -85,43 +245,17 @@ export class AdminComponent implements OnInit {
     this.addBook();
   }
 
-  // Перемикання вибору жанру для книги
-  toggleGenre(genreId: number): void {
-    const index = this.selectedGenres.indexOf(genreId);
-    if (index > -1) {
-      this.selectedGenres.splice(index, 1);
-    } else {
-      this.selectedGenres.push(genreId);
-    }
-  }
-
-  // Обробка зміни стану чекбоксу для жанрів
-  onGenreChange(genreId: number, event: any): void {
-    if (event.target.checked) {
-      this.selectedGenres.push(genreId);
-    } else {
-      const index = this.selectedGenres.indexOf(genreId);
-      if (index > -1) {
-        this.selectedGenres.splice(index, 1);
-      }
-    }
-  }
-
   // Додавання нової книги
   addBook(): void {
     if (!this.validateBookForm()) {
       return;
     }
 
-    // Формуємо список жанрів для нової книги
-    const bookGenres = this.genres.filter(genre =>
-      this.selectedGenres.includes(genre.id)
-    );
-
     // Создаем объект для добавления книги
     const bookToAdd: NewBook = {
       ...this.newBook,
-      genres: bookGenres
+      categoryId: this.newBook.categoryId,
+      subcategoryId: this.newBook.subcategoryId
     };
 
     // Викликаємо метод для додавання книги через сервіс
@@ -180,27 +314,20 @@ export class AdminComponent implements OnInit {
   // Перевірка форми на коректність заповнення обов'язкових полів
   private validateBookForm(): boolean {
     if (!this.newBook.title || !this.newBook.author || !this.newBook.description || !this.newBook.coverImage) {
-      this.message = 'Будь ласка, заповніть усі обов\'язкові поля.';
+      this.message = 'Будь ласка, заповніть усі обов`язкові поля.';
       this.messageType = 'danger';
       return false;
     }
-
-    if (!this.fileSelected) {
-      this.message = 'Будь ласка, виберіть PDF файл книги.';
+    // Додано перевірку на categoryId
+    if (!this.newBook.categoryId) {
+      this.message = 'Будь ласка, виберіть категорію.';
       this.messageType = 'danger';
       return false;
     }
-
-    if (this.selectedGenres.length === 0) {
-      this.message = 'Будь ласка, виберіть хоча б один жанр для книги.';
-      this.messageType = 'danger';
-      return false;
-    }
-
     return true;
   }
 
-  // Скидання форми після додавання книги
+  // Скидає форму додавання книги
   private resetBookForm(): void {
     this.newBook = {
       title: '',
@@ -211,94 +338,96 @@ export class AdminComponent implements OnInit {
       language: 'Українська',
       coverImage: '',
       description: '',
-      content: null
+      content: null,
+      categoryId: this.selectedCategoryId || 0,
+      subcategoryId: undefined
     };
-    this.selectedGenres = [];
+    // Після скидання форми, знову завантажуємо підкатегорії для поточної категорії
+    if (this.selectedCategoryId) {
+      this.loadSubcategories(this.selectedCategoryId);
+    }
   }
 
-  // Вибір книги для завантаження її тексту
+  // Методи для завантаження та редагування тексту книги
   selectBookForTextUpload(bookId: number): void {
     this.selectedBookId = bookId;
-    this.bookTextContent = '';
-
-    // Завантаження поточного тексту книги
-    this.bookService.getBookById(bookId).subscribe(book => {
-      if (book && book.content) {
-        this.bookTextContent = book.content;
+    // Отримуємо існуючий текст книги (якщо він є)
+    this.bookService.getBookContent(bookId).subscribe({
+      next: (blob) => {
+        if (blob) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            this.bookTextContent = reader.result as string;
+          };
+          reader.readAsText(blob);
+        } else {
+          this.bookTextContent = '';
+        }
+      },
+      error: (error) => {
+        console.error('Помилка при отриманні тексту книги:', error);
+        this.bookTextContent = 'Помилка при завантаженні тексту книги.';
       }
     });
   }
 
-  // Завантаження тексту для вибраної книги
   uploadBookText(): void {
-    if (!this.selectedBookId || !this.bookTextContent.trim()) {
-      this.message = 'Будь ласка, виберіть книгу та введіть текст.';
+    if (!this.selectedBookId) {
+      this.message = 'Будь ласка, виберіть книгу для завантаження тексту.';
       this.messageType = 'danger';
       return;
     }
 
-    // Знаходимо книгу по ID і оновлюємо її текст
-    const bookIndex = this.books.findIndex(b => b.id === this.selectedBookId);
-    if (bookIndex !== -1) {
-      this.books[bookIndex].content = this.bookTextContent;
-      this.message = 'Текст книги успішно завантажено!';
-      this.messageType = 'success';
+    const bookFile = new File([this.bookTextContent], `book-${this.selectedBookId}-content.txt`, { type: 'text/plain' });
 
-      // Скидаємо вибір книги та текст
-      this.selectedBookId = null;
-      this.bookTextContent = '';
-    }
+    this.bookService.uploadBookContent(this.selectedBookId, bookFile).subscribe({
+      next: () => {
+        this.message = 'Текст книги успішно завантажено!';
+        this.messageType = 'success';
+        this.cancelTextUpload(); // Очищаємо форму після завантаження
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error('Помилка при завантаженні тексту книги:', error);
+        this.message = 'Помилка при завантаженні тексту книги. Будь ласка, спробуйте ще раз.';
+        this.messageType = 'danger';
+      }
+    });
   }
 
-  // Скасування завантаження тексту
   cancelTextUpload(): void {
     this.selectedBookId = null;
     this.bookTextContent = '';
   }
 
-  // Повернення назви вибраної книги
   getSelectedBookTitle(): string {
-    const selectedBook = this.books.find(book => book.id === this.selectedBookId);
-    return selectedBook ? selectedBook.title : '';
+    const book = this.books.find(b => b.id === this.selectedBookId);
+    return book ? book.title : '';
   }
 
-  // Повернення автора вибраної книги
   getSelectedBookAuthor(): string {
-    const selectedBook = this.books.find(book => book.id === this.selectedBookId);
-    return selectedBook ? selectedBook.author : '';
+    const book = this.books.find(b => b.id === this.selectedBookId);
+    return book ? book.author : '';
   }
 
-  // Обробка вибору файлу
   onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    this.fileError = '';
-    
+    const file: File = event.target.files[0];
     if (file) {
-      // Проверка расширения
-      if (!file.name.toLowerCase().endsWith('.pdf')) {
-        this.fileError = 'Будь ласка, виберіть файл у форматі PDF';
+      if (file.type !== 'application/pdf') {
+        this.fileError = 'Будь ласка, оберіть файл формату PDF.';
         this.fileSelected = false;
         this.selectedFileName = '';
+        this.newBook.content = null;
         return;
       }
-
-      // Проверка размера (максимум 50MB)
-      if (file.size > 50 * 1024 * 1024) {
-        this.fileError = 'Розмір файлу не повинен перевищувати 50MB';
-        this.fileSelected = false;
-        this.selectedFileName = '';
-        return;
-      }
-
       this.selectedFileName = file.name;
       this.fileSelected = true;
-
-      // Сохраняем сам файл для отправки
       this.newBook.content = file;
+      this.fileError = '';
     } else {
       this.fileSelected = false;
       this.selectedFileName = '';
       this.newBook.content = null;
+      this.fileError = '';
     }
   }
 }
